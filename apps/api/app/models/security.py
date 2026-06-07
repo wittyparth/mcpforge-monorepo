@@ -12,15 +12,14 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
+from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin, UUIDMixin
 
 if TYPE_CHECKING:
-    from app.models.mcp_server import MCPServer
-    from app.models.user import User
+    pass
 
 
 class SecurityScanResult(Base, UUIDMixin, TimestampMixin):
@@ -34,7 +33,7 @@ class SecurityScanResult(Base, UUIDMixin, TimestampMixin):
         nullable=False,
     )
     scan_status: Mapped[str] = mapped_column(String(20), nullable=False)
-    findings: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
+    findings: Mapped[list[dict[str, Any]]] = mapped_column(JSON, nullable=False, default=list)
     critical_count: Mapped[int] = mapped_column(Integer, default=0)
     high_count: Mapped[int] = mapped_column(Integer, default=0)
     medium_count: Mapped[int] = mapped_column(Integer, default=0)

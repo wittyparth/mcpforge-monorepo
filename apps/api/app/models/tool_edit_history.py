@@ -15,15 +15,14 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, String, Text
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
+from sqlalchemy import DateTime, ForeignKey, JSON, String, Text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, UUIDMixin
 
 if TYPE_CHECKING:
-    from app.models.mcp_server import MCPServer
-    from app.models.user import User
+    pass
 
 
 class ToolEditHistory(Base, UUIDMixin):
@@ -45,7 +44,7 @@ class ToolEditHistory(Base, UUIDMixin):
     previous_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     new_description: Mapped[str] = mapped_column(Text, nullable=False)
     metadata_: Mapped[dict[str, Any] | None] = mapped_column(
-        "metadata", JSONB, nullable=True
+        "metadata", JSON, nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 

@@ -16,7 +16,9 @@ Keys:
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from dataclasses import dataclass
+from typing import Any
 from uuid import UUID
 
 from redis.asyncio import Redis
@@ -45,7 +47,7 @@ class RotationResult:
     replay_detected: bool
 
 
-async def _with_redis():  # type: ignore[no-untyped-def]
+async def _with_redis() -> AsyncIterator[Redis]:
     pool = await get_redis_pool()
     redis = Redis.from_pool(pool)
     try:
@@ -58,7 +60,7 @@ async def is_jti_used(jti: str) -> bool:
     """Return True if a jti has already been used (and is blacklisted)."""
     async for r in _with_redis():
         return bool(await r.exists(_KEY_USED.format(jti=jti)))
-    return False  # type: ignore[unreachable]
+    return False
 
 
 async def check_and_mark_jti(user_id: UUID, jti: str) -> RotationResult:
@@ -75,10 +77,10 @@ async def check_and_mark_jti(user_id: UUID, jti: str) -> RotationResult:
     family_key = _KEY_FAMILY.format(user_id=str(user_id))
 
     async for r in _with_redis():
-        # SETNX semantics: returns 1 if the key did not exist (fresh jti),
-        # 0 if it did (replay).
+        # SETNX semantics: returns True if the key did not exist (fresh jti),
+        # None if it did (replay).
         fresh = await r.set(used_key, b"1", ex=_TTL_SECONDS, nx=True)
-        if not fresh:
+        if fresh is None or not fresh:
             # Replay detected. Revoke the whole family.
             revoked = await _revoke_family(r, user_id)
             logger.error(
@@ -90,10 +92,10 @@ async def check_and_mark_jti(user_id: UUID, jti: str) -> RotationResult:
             return RotationResult(ok=False, replay_detected=True)
 
         # Fresh jti — track it in the user's family.
-        await r.sadd(family_key, jti)
+        await r.sadd(family_key, jti)  # type: ignore[misc]
         await r.expire(family_key, _TTL_SECONDS)
         return RotationResult(ok=True, replay_detected=False)
-    return RotationResult(ok=False, replay_detected=False)  # type: ignore[unreachable]
+    return RotationResult(ok=False, replay_detected=False)
 
 
 async def _revoke_family(r: Redis, user_id: UUID) -> int:
@@ -103,12 +105,13 @@ async def _revoke_family(r: Redis, user_id: UUID) -> int:
         Number of jti's revoked.
     """
     family_key = _KEY_FAMILY.format(user_id=str(user_id))
-    members = await r.smembers(family_key)
+    raw_members: set[Any] = await r.smembers(family_key)  # type: ignore[misc]
+    members: set[bytes] = {m for m in raw_members if isinstance(m, bytes | bytearray)}
     if not members:
         return 0
-    pipe = r.pipeline()
+    pipe = await r.pipeline()  # type: ignore[misc]
     for jti in members:
-        jti_str = jti.decode() if isinstance(jti, (bytes, bytearray)) else jti
+        jti_str = jti.decode() if isinstance(jti, bytes | bytearray) else jti
         pipe.set(_KEY_USED.format(jti=jti_str), b"1", ex=_TTL_SECONDS)
     pipe.delete(family_key)
     await pipe.execute()
@@ -122,4 +125,5 @@ async def revoke_all_for_user(user_id: UUID) -> int:
     """
     async for r in _with_redis():
         return await _revoke_family(r, user_id)
-    return 0  # type: ignore[unreachable]
+    return 0
+

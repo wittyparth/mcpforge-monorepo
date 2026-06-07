@@ -17,7 +17,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_db
 from app.core.exceptions import UnauthorizedError
 from app.core.security import decode_token
 from app.gateway.transport_http import handle_http_request

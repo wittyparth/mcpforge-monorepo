@@ -30,7 +30,9 @@ class ToolBreakdownItem(BaseModel):
     call_count: int
     error_count: int
     avg_latency_ms: float
-    selection_rate: float = Field(..., ge=0.0, le=1.0, description="Fraction of sessions that called this tool")
+    selection_rate: float = Field(
+        ..., ge=0.0, le=1.0, description="Fraction of sessions that called this tool"
+    )
 
 
 class ErrorLogItem(BaseModel):

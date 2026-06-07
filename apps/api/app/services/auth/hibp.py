@@ -79,6 +79,7 @@ async def check_password_breached(
     if owns_client:
         client = httpx.AsyncClient(timeout=timeout)
     try:
+        assert client is not None
         resp = await client.get(url, headers={"User-Agent": _USER_AGENT})
         resp.raise_for_status()
     except httpx.HTTPError as exc:

@@ -18,8 +18,12 @@ class ToolListItem(BaseModel):
     input_schema: dict[str, Any]
     http_method: str
     http_path: str
-    quality_score: int | None = Field(default=None, description="AI-scored quality (0-100), null if not scored")
-    quality_breakdown: dict[str, int] | None = Field(default=None, description="4-dimension quality scores")
+    quality_score: int | None = Field(
+        default=None, description="AI-scored quality (0-100), null if not scored"
+    )
+    quality_breakdown: dict[str, int] | None = Field(
+        default=None, description="4-dimension quality scores"
+    )
     enabled: bool = True
     last_enhanced_at: str | None = None
 

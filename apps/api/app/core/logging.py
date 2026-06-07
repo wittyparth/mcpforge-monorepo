@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import MutableMapping
 from typing import Any
 
 import structlog
@@ -52,8 +53,8 @@ def _redact_value(value: Any) -> Any:
             return _VALUE_REDACTED
         return value
     if isinstance(value, dict):
-        return {k: strip_sensitive_processor(None, None, {k: v}) for k, v in value.items()}
-    if isinstance(value, (list, tuple)):
+        return {k: strip_sensitive_processor(None, "", {k: v})[k] for k, v in value.items()}
+    if isinstance(value, list | tuple):
         cleaned = [_redact_value(v) for v in value]
         return type(value)(cleaned) if isinstance(value, tuple) else cleaned
     return value
@@ -62,8 +63,8 @@ def _redact_value(value: Any) -> Any:
 def strip_sensitive_processor(
     logger: Any,  # noqa: ARG001 — structlog signature
     method_name: str,  # noqa: ARG001
-    event_dict: dict[str, Any],
-) -> dict[str, Any]:
+    event_dict: MutableMapping[str, Any],
+) -> MutableMapping[str, Any]:
     """Structlog processor that strips sensitive fields from log records.
 
     Behavior:
@@ -101,8 +102,8 @@ def setup_logging() -> None:
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,
-            structlog.processors.UnicodeDecoder(),
             strip_sensitive_processor,
+            structlog.processors.UnicodeDecoder(),
             renderer,
         ],
         wrapper_class=structlog.stdlib.BoundLogger,

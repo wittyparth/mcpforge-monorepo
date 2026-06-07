@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 
 class ConnectPanelResponse(BaseModel):
@@ -18,7 +18,9 @@ class ConnectPanelResponse(BaseModel):
     sse_endpoint: str
     http_endpoint: str
     auth_required: bool
-    auth_methods: list[Literal["jwt_cookie", "bearer_header", "api_key"]] = Field(default_factory=list)
+    auth_methods: list[Literal["jwt_cookie", "bearer_header", "api_key"]] = Field(
+        default_factory=list
+    )
     example_client_config: dict[str, str] = Field(default_factory=dict)
 
 
@@ -35,7 +37,9 @@ class TestConnectionResponse(BaseModel):
     success: bool
     status_code: int | None
     latency_ms: int
-    response_excerpt: str | None = Field(default=None, description="First 1KB of response, or error message")
+    response_excerpt: str | None = Field(
+        default=None, description="First 1KB of response, or error message"
+    )
     error: str | None = None
 
 

@@ -42,8 +42,12 @@ class ToolDefinition(BaseModel):
     input_schema: dict[str, Any] = Field(..., description="JSON Schema for tool arguments")
     http_method: str = Field(..., description="GET, POST, PUT, PATCH, DELETE")
     http_path: str = Field(..., description="Path with placeholders, e.g., '/users/{id}'")
-    base_url_override: str | None = Field(default=None, description="Override the server base URL for this tool only")
-    operation_id: str | None = Field(default=None, description="Original OpenAPI operationId, if any")
+    base_url_override: str | None = Field(
+        default=None, description="Override the server base URL for this tool only"
+    )
+    operation_id: str | None = Field(
+        default=None, description="Original OpenAPI operationId, if any"
+    )
 
 
 class SpecToolListResponse(BaseModel):

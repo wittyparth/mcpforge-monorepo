@@ -33,7 +33,9 @@ class SubscribeRequest(BaseModel):
     seats: int = Field(default=1, ge=1, le=100, description="Only used for team plan")
     stripe_payment_method_id: str | None = Field(
         default=None,
-        description="Stripe payment method ID; if null, the user is redirected to Stripe Checkout.",
+        description=(
+            "Stripe payment method ID; if null, the user is redirected to Stripe Checkout."
+        ),
     )
 
 
@@ -44,7 +46,8 @@ class SubscribeResponse(BaseModel):
     plan: str
     status: str
     checkout_url: str | None = Field(
-        default=None, description="URL to redirect to if user needs to complete payment via Stripe Checkout",
+        default=None,
+        description="URL to redirect to if user needs to complete payment via Stripe Checkout",
     )
     client_secret: str | None = Field(
         default=None, description="Stripe SetupIntent client secret for inline payment",

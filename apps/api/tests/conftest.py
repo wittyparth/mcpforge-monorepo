@@ -16,15 +16,24 @@ from app.core.config import settings
 from app.main import app
 from app.models.base import Base
 
-# Use test database URL or SQLite fallback
-TEST_DATABASE_URL = settings.DATABASE_URL
-if "localhost" in TEST_DATABASE_URL or "127.0.0.1" in TEST_DATABASE_URL:
-    # Use test-specific database — only replace the last segment
-    if not TEST_DATABASE_URL.endswith("mcpforge_test"):
-        TEST_DATABASE_URL = TEST_DATABASE_URL.rstrip("/").rsplit("/", 1)[0] + "/mcpforge_test"
-elif "sqlite" not in TEST_DATABASE_URL:
-    # Fallback to SQLite for environments without Postgres
-    TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+# Wave 0 hardening: disable features that make network calls or depend
+# on external services in the default test environment. Individual tests
+# can override these with monkeypatch.
+settings.HIBP_ENABLED = False
+
+# Use SQLite by default for local testing. Override with
+# `DATABASE_URL=postgresql+asyncpg://...` env var for CI.
+_TEST_SQLITE = "sqlite+aiosqlite:///./test.db"
+TEST_DATABASE_URL = settings.TEST_DATABASE_URL if hasattr(settings, 'TEST_DATABASE_URL') else _TEST_SQLITE
+if "postgresql" in TEST_DATABASE_URL or "localhost" in TEST_DATABASE_URL:
+    # Called from CI where a real PostgreSQL test database is available.
+    # Use the provided URL directly; else fall back to SQLite.
+    if "sqlite" not in str(TEST_DATABASE_URL):
+        pass  # CI provides postgres
+    else:
+        TEST_DATABASE_URL = _TEST_SQLITE
+else:
+    TEST_DATABASE_URL = _TEST_SQLITE
 
 
 @pytest_asyncio.fixture

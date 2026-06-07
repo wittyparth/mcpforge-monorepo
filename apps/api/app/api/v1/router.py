@@ -28,8 +28,12 @@ router = APIRouter(prefix="/api/v1")
 
 # Phase 1 — ships today
 router.include_router(auth_router, prefix="/auth", tags=["auth"])
-router.include_router(servers_router, prefix="/servers", tags=["servers"])
+# Health MUST come before servers_router: servers has `/{server_id}` (UUID)
+# which STARLETTE matches before /health when registered first. The path
+# /health resolves to both templates; the 401 from get_current_user on
+# /{server_id} wins the race against UUID validation 422.
 router.include_router(health_router, prefix="/servers", tags=["servers"])
+router.include_router(servers_router, prefix="/servers", tags=["servers"])
 
 # Wave 0 Skeleton — F1, F2, F4, F5, F6, F7 stubs (return 501 until implemented)
 router.include_router(specs_router, tags=["specs"])

@@ -46,7 +46,12 @@ class Credential(Base, UUIDMixin, TimestampMixin):
     server: Mapped[MCPServer] = relationship(
         "MCPServer", back_populates="credentials", foreign_keys=[server_id]
     )
-    user: Mapped[User] = relationship("User", back_populates="credentials")
+    # Specify foreign_keys explicitly: `user_id` is the direct FK; the
+    # alternative path is `server_id` -> MCPServer.user_id -> users.id.
+    # Without this, SQLAlchemy raises AmbiguousForeignKeysError.
+    user: Mapped[User] = relationship(
+        "User", back_populates="credentials", foreign_keys=[user_id]
+    )
 
     def __repr__(self) -> str:
         return f"<Credential {self.env_var_name}>"

@@ -10,11 +10,11 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 import sentry_sdk
-import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
+from sentry_sdk.types import Event, Hint
 
 from app.api.v1.router import router as v1_router
 from app.core.celery_app import ping_workers
@@ -34,7 +34,6 @@ from app.gateway.mcp_server import router as mcp_router
 from app.playground.ws import router as playground_router
 from app.schemas.common import HealthResponse
 
-
 # ── Sentry init (must run before app creation) ──────────────────────────────
 
 
@@ -48,16 +47,19 @@ def _init_sentry() -> None:
     if not settings.SENTRY_DSN:
         return
 
-    def _sanitize(event: dict, hint: dict) -> dict | None:  # type: ignore[type-arg]
+    def _sanitize(event: Event, hint: Hint) -> Event | None:
         # Strip Authorization headers
-        request = event.get("request") or {}
-        if "headers" in request:
+        request: dict[str, object] = event.get("request") or {}
+        if not request:
+            return event
+        headers = request.get("headers")
+        if isinstance(headers, dict):
             request["headers"] = {
                 k: ("[REDACTED]" if k.lower() == "authorization" else v)
-                for k, v in request["headers"].items()
+                for k, v in headers.items()
             }
         # Strip bodies for credential routes
-        url = request.get("url", "")
+        url = str(request.get("url", "") or "")
         if "/credentials" in url or "/auth" in url:
             request["data"] = "[REDACTED]"
         return event

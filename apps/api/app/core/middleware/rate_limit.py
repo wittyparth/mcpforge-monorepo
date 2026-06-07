@@ -95,7 +95,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 count=count,
                 limit=limit,
             )
-            response = JSONResponse(
+            err_response: Response = JSONResponse(
                 status_code=429,
                 content={
                     "error": {
@@ -104,10 +104,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                     }
                 },
             )
-            response.headers["Retry-After"] = str(window_seconds)
-            response.headers["X-RateLimit-Limit"] = str(limit)
-            response.headers["X-RateLimit-Remaining"] = "0"
-            return response
+            err_response.headers["Retry-After"] = str(window_seconds)
+            err_response.headers["X-RateLimit-Limit"] = str(limit)
+            err_response.headers["X-RateLimit-Remaining"] = "0"
+            return err_response
 
         response = await call_next(request)
         response.headers["X-RateLimit-Limit"] = str(limit)

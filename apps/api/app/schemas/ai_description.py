@@ -7,7 +7,6 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # ── Quality scoring ────────────────────────────────────────────────────────
 
 
@@ -23,7 +22,7 @@ class AIQualityScore(BaseModel):
     @classmethod
     def from_components(
         cls, clarity: int, specificity: int, correctness: int, actionability: int
-    ) -> "AIQualityScore":
+    ) -> AIQualityScore:
         overall = round((clarity + specificity + correctness + actionability) / 4)
         return cls(
             clarity=clarity,

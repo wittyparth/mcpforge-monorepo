@@ -53,7 +53,7 @@ async def playground_websocket(
     """WebSocket endpoint for the MCP Playground (auth required)."""
     await websocket.accept()
     try:
-        user_id = await _authenticate_ws(token)
+        await _authenticate_ws(token)
     except UnauthorizedError as exc:
         await websocket.send_text(
             json.dumps(

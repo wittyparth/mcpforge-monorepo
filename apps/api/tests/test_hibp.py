@@ -29,7 +29,7 @@ class TestBreachedPassword:
     async def test_returns_breached_when_hash_found(self, hibp_off) -> None:
         # The HIBP response is "<SUFFIX>:<COUNT>" per line, for ALL suffixes
         # that share the requested prefix. We include our target suffix.
-        respx.get(f"{settings.HIBP_API_URL}/{_PREFIX}").mock(
+        respx.route(host="api.pwnedpasswords.com").mock(
             return_value=httpx.Response(200, text=f"XXXXX:3\r\n{_SUFFIX}:9999\r\nYYYYY:1\r\n")
         )
         result = await check_password_breached("password")
@@ -42,7 +42,7 @@ class TestCleanPassword:
     @pytest.mark.asyncio
     @respx.mock
     async def test_returns_not_breached_when_hash_absent(self, hibp_off) -> None:
-        respx.get(f"{settings.HIBP_API_URL}/{_PREFIX}").mock(
+        respx.route(host="api.pwnedpasswords.com").mock(
             return_value=httpx.Response(200, text="XXXXX:3\r\nYYYYY:1\r\n")
         )
         result = await check_password_breached("a-truly-unique-password-2026-xyzzy-9999")
@@ -54,7 +54,7 @@ class TestNetworkErrorFailsOpen:
     @pytest.mark.asyncio
     @respx.mock
     async def test_returns_not_breached_on_500(self, hibp_off) -> None:
-        respx.get(settings.HIBP_API_URL).mock(return_value=httpx.Response(500))
+        respx.route(host="api.pwnedpasswords.com").mock(return_value=httpx.Response(500))
         result = await check_password_breached("anything")
         # Network failure → fail OPEN (don't block registration).
         assert result.breached is False
@@ -62,7 +62,9 @@ class TestNetworkErrorFailsOpen:
     @pytest.mark.asyncio
     @respx.mock
     async def test_returns_not_breached_on_timeout(self, hibp_off) -> None:
-        respx.get(settings.HIBP_API_URL).mock(side_effect=httpx.ConnectError("nope"))
+        respx.route(host="api.pwnedpasswords.com").mock(
+            side_effect=httpx.ConnectError("nope")
+        )
         result = await check_password_breached("anything")
         assert result.breached is False
 
@@ -87,11 +89,13 @@ class TestPrivacyGuarantee:
             captured_urls.append(str(request.url))
             return httpx.Response(200, text="XXXXX:1\r\n")
 
-        respx.get(settings.HIBP_API_URL).mock(side_effect=_capture)
+        respx.route(host="api.pwnedpasswords.com").mock(side_effect=_capture)
         await check_password_breached("my-very-secret-password")
         assert len(captured_urls) == 1
         url = captured_urls[0]
         assert "my-very-secret-password" not in url
         # The URL should end with the 5-char SHA-1 prefix of the password.
-        digest = hashlib.sha1(b"my-very-secret-password", usedforsecurity=False).hexdigest().upper()
+        digest = hashlib.sha1(
+            b"my-very-secret-password", usedforsecurity=False
+        ).hexdigest().upper()
         assert url.endswith(digest[:5])

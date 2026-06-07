@@ -183,8 +183,10 @@ class AuthService:
             raise UnauthorizedError("User not found")
         return user
 
-    async def logout(self, user_id: UUID) -> None:
-        """Revoke all outstanding refresh tokens for the user."""
+    async def logout(self, user_id: UUID | None) -> None:
+        """Revoke all outstanding refresh tokens for the user (if known)."""
+        if user_id is None:
+            return
         await token_rotation.revoke_all_for_user(user_id)
 
     @staticmethod

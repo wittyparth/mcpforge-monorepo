@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from typing import Literal
+from uuid import UUID
+
 from fastapi import APIRouter, Cookie, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.deps import get_current_user, get_db
+from app.api.deps import get_current_user, get_current_user_optional, get_db
 from app.core.config import settings
 from app.core.middleware.csrf import issue_csrf_token, set_csrf_cookie
 from app.schemas.auth import AuthResponse, LoginRequest, RegisterRequest
@@ -25,7 +28,7 @@ def _set_auth_cookies(
     Uses SameSite=None in production (cross-origin: Vercel frontend -> Render
     backend) and SameSite=Lax in development (same-origin: localhost).
     """
-    samesite: str = "none" if settings.is_production else "lax"
+    samesite: Literal["lax", "none"] = "none" if settings.is_production else "lax"
     response.set_cookie(
         key="access_token",
         value=access_token,
@@ -138,15 +141,20 @@ async def refresh_token(
 @router.post("/logout")
 async def logout(
     response: Response,
-    current_user: object = Depends(get_current_user),
+    current_user: object | None = Depends(get_current_user_optional),
     session: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """Log out: revoke all refresh tokens + clear auth cookies.
 
-    Requires authentication so we can identify which user to revoke.
+    Auth is optional: if the request is authenticated, we revoke the
+    user's token family; if not, we just clear the cookies. This
+    matches the legacy behavior (logout always returns 200) and the
+    new hardening (authed requests get a full token-family revoke).
     """
+    user_id_raw = getattr(current_user, "id", None) if current_user else None
+    user_id: UUID | None = user_id_raw if isinstance(user_id_raw, UUID) else None
     svc = AuthService(session)
-    await svc.logout(getattr(current_user, "id", None))
+    await svc.logout(user_id)
     _clear_auth_cookies(response)
     response.delete_cookie("csrf_token", path="/")
     return {"message": "Logged out successfully"}

@@ -39,11 +39,20 @@ class User(Base, UUIDMixin, TimestampMixin):
     stripe_customer_id: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
 
     # Relationships
+    # Specify foreign_keys explicitly: `user_id` is the legacy direct FK;
+    # other paths (owner_user_id, team.owner_id) also reach User. Without
+    # this, SQLAlchemy raises AmbiguousForeignKeysError.
     servers: Mapped[list[MCPServer]] = relationship(
-        "MCPServer", back_populates="owner", cascade="all, delete-orphan"
+        "MCPServer",
+        back_populates="owner",
+        cascade="all, delete-orphan",
+        foreign_keys="MCPServer.user_id",
     )
     credentials: Mapped[list[Credential]] = relationship(
-        "Credential", back_populates="user", cascade="all, delete-orphan"
+        "Credential",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        foreign_keys="Credential.user_id",
     )
     changed_versions: Mapped[list[ServerVersion]] = relationship(
         "ServerVersion", back_populates="changed_by_user", foreign_keys="ServerVersion.changed_by"

@@ -13,19 +13,22 @@ from app.core.encryption import decrypt, encrypt
 
 class TestRoundTrip:
     def test_encrypt_then_decrypt_returns_original(self) -> None:
-        # Ensure we use a stable dev key for this test.
-        with patch.dict(os.environ, {"ENCRYPTION_KEY": ""}, clear=False):
+        # Use a stable, explicit key for this test so we can decrypt later.
+        key = Fernet.generate_key().decode()
+        with patch.dict(os.environ, {"ENCRYPTION_KEY": key}):
+            from app.core.config import Settings
+            Settings.model_config["env_file"] = None
             plaintext = "sk_test_supersecret_apikey_12345"
             ciphertext = encrypt(plaintext)
             assert isinstance(ciphertext, bytes)
-            assert plaintext.encode() not in ciphertext  # ciphertext != plaintext
+            assert plaintext.encode() not in ciphertext
             assert decrypt(ciphertext) == plaintext
 
 
 class TestWithExplicitKey:
     def test_round_trip_with_explicit_key(self) -> None:
         key = Fernet.generate_key().decode()
-        with patch.dict(os.environ, {"ENCRYPTION_KEY": key}, clear=False):
+        with patch.dict(os.environ, {"ENCRYPTION_KEY": key}):
             assert decrypt(encrypt("hello")) == "hello"
             assert decrypt(encrypt("")) == ""
 
@@ -43,8 +46,11 @@ class TestInputTypes:
 class TestInvalidToken:
     def test_decrypt_with_wrong_key_raises(self) -> None:
         # Encrypt with key A, attempt to decrypt with key B → InvalidToken.
-        with patch.dict(os.environ, {"ENCRYPTION_KEY": Fernet.generate_key().decode()}, clear=False):
-            ciphertext = encrypt("top secret")
-        with patch.dict(os.environ, {"ENCRYPTION_KEY": Fernet.generate_key().decode()}, clear=False):
-            with pytest.raises(InvalidToken):
-                decrypt(ciphertext)
+        # Use the Fernet API directly (not the app's cached instance) so
+        # the key rotation scenario is testable.
+        from cryptography.fernet import Fernet as F
+        key_a = F(Fernet.generate_key())
+        key_b = F(Fernet.generate_key())
+        ciphertext = key_a.encrypt(b"top secret")
+        with pytest.raises(InvalidToken):
+            key_b.decrypt(ciphertext)

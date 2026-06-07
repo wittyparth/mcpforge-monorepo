@@ -64,4 +64,7 @@ class TestTokenSigning:
         assert verify_csrf_token(None) is False
         assert verify_csrf_token("") is False
         assert verify_csrf_token("no-sig") is False
-        assert verify_csrf_token("raw.sig") is True  # format valid; sig may not match
+        # Format is valid (raw.sig) but signature won't match — must reject.
+        assert verify_csrf_token("raw.sig") is False
+        # A clearly-attacker-crafted token (no separator) is rejected.
+        assert verify_csrf_token("not-a-token-at-all") is False

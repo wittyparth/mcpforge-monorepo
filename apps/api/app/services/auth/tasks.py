@@ -15,7 +15,7 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-@celery_app.task(name="app.services.auth.tasks.cleanup_revoked_tokens")
+@celery_app.task(name="app.services.auth.tasks.cleanup_revoked_tokens")  # type: ignore[misc]
 def cleanup_revoked_tokens() -> dict[str, int]:
     """No-op: revoked tokens expire via Redis TTL.
 
@@ -26,3 +26,4 @@ def cleanup_revoked_tokens() -> dict[str, int]:
     """
     logger.info("cleanup_revoked_tokens_invoked", note="redis_ttl_handles_expiry")
     return {"revoked": 0}
+

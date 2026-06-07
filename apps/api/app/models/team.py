@@ -25,7 +25,6 @@ if TYPE_CHECKING:
     from app.models.audit_log import AuditLog
     from app.models.billing import Subscription
     from app.models.mcp_server import MCPServer
-    from app.models.user import User
 
 
 class Team(Base, UUIDMixin, TimestampMixin):

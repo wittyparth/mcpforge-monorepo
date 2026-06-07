@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import warnings
 
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.fernet import Fernet
 
 from app.core.config import settings
 
@@ -47,7 +47,7 @@ def decrypt(ciphertext: bytes) -> str:
         InvalidToken: If the token is invalid, tampered with, or encrypted
             under a different key.
     """
-    if not isinstance(ciphertext, (bytes, bytearray, memoryview)):
+    if not isinstance(ciphertext, bytes | bytearray | memoryview):
         raise TypeError(
             f"ciphertext must be bytes, got {type(ciphertext).__name__}"
         )

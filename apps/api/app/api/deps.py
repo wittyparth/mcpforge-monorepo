@@ -90,3 +90,9 @@ async def get_optional_current_user(
 
     user_repo = UserRepository(session)
     return await user_repo.get_by_id(user_id)
+
+
+# Canonical alias used by route handlers. Defined at module bottom so the
+# forward reference to get_optional_current_user resolves.
+get_current_user_optional = get_optional_current_user
+
