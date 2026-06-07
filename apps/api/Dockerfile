@@ -38,6 +38,7 @@ COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
 COPY start.sh ./
+RUN chmod +x start.sh
 
 # Expose port
 EXPOSE 8000
