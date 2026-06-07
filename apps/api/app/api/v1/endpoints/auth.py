@@ -19,13 +19,18 @@ def _set_auth_cookies(
     access_token: str,
     refresh_token: str,
 ) -> None:
-    """Set httpOnly cookies for access and refresh tokens."""
+    """Set httpOnly cookies for access and refresh tokens.
+
+    Uses SameSite=None in production (cross-origin: Vercel frontend → Render backend)
+    and SameSite=Lax in development (same-origin: localhost:3000 → localhost:8000).
+    """
+    samesite: str = "none" if settings.is_production else "lax"
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        secure=settings.is_production,
-        samesite="lax",
+        secure=settings.is_production,  # required when SameSite=None
+        samesite=samesite,
         max_age=settings.JWT_ACCESS_TTL_MINUTES * 60,
         path="/",
     )
@@ -33,8 +38,8 @@ def _set_auth_cookies(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=settings.is_production,
-        samesite="lax",
+        secure=settings.is_production,  # required when SameSite=None
+        samesite=samesite,
         max_age=settings.JWT_REFRESH_TTL_DAYS * 86400,
         path="/api/v1/auth",
     )
