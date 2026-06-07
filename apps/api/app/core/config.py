@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     # Runtime
     ENVIRONMENT: str = "development"
     LOG_LEVEL: str = "INFO"
+    API_VERSION: str = "0.1.0"
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/mcpforge"
@@ -36,15 +37,65 @@ class Settings(BaseSettings):
     # CORS
     CORS_ORIGINS: list[str] = ["http://localhost:3000"]
 
-    # API version
-    API_VERSION: str = "0.1.0"
+    # Encryption (Fernet master key for credentials at rest)
+    ENCRYPTION_KEY: str = ""
+
+    # CSRF
+    CSRF_SECRET: str = ""
+
+    # Rate limiting
+    RATE_LIMIT_PER_IP_PER_MINUTE: int = 60
+    RATE_LIMIT_AUTH_PER_IP_PER_MINUTE: int = 5
+
+    # Account lockout
+    LOCKOUT_MAX_ATTEMPTS: int = 5
+    LOCKOUT_DURATION_MINUTES: int = 15
+
+    # HIBP
+    HIBP_ENABLED: bool = True
+    HIBP_API_URL: str = "https://api.pwnedpasswords.com/range"
 
     # GitHub OAuth (optional, Phase 2)
     GITHUB_OAUTH_CLIENT_ID: str = ""
     GITHUB_OAUTH_CLIENT_SECRET: str = ""
+    GITHUB_OAUTH_REDIRECT_URI: str = ""
 
-    # AI (placeholder, Phase 3)
-    ANTHROPIC_API_KEY: str = ""
+    # LLM provider (OpenAI-compatible, primary = DeepSeek)
+    LLM_PROVIDER: str = "opencode-go"
+    LLM_BASE_URL: str = "https://opencode.ai/zen/go/v1"
+    LLM_MODEL: str = "deepseek-v4-flash"
+    LLM_API_KEY: str = ""
+    LLM_MAX_TOKENS: int = 2000
+    LLM_TEMPERATURE: float = 0.0
+    LLM_TIMEOUT_SECONDS: int = 60
+    LLM_RETRY_ATTEMPTS: int = 3
+    LLM_PROMPT_CACHING_ENABLED: bool = True
+    LLM_JSON_MODE: bool = True
+
+    # Email (Resend, Phase 1.1)
+    EMAIL_PROVIDER_API_KEY: str = ""
+    EMAIL_FROM_ADDRESS: str = "noreply@mcpforge.io"
+
+    # Stripe billing (Phase 1.1)
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_LITIGATED_MODE: bool = False
+
+    # Cloudflare R2 (S3-compatible, F1 spec storage)
+    R2_BUCKET: str = ""
+    R2_ACCESS_KEY_ID: str = ""
+    R2_SECRET_ACCESS_KEY: str = ""
+    R2_ACCOUNT_ID: str = ""
+    R2_ENDPOINT_URL: str = ""
+
+    # Sentry
+    SENTRY_DSN: str = ""
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.1
+
+    # Cost guardrails
+    MAX_AI_CREDITS_PER_USER_PER_DAY: int = 100
+    MAX_SPEC_SIZE_BYTES: int = 5_242_880  # 5MB
+    MAX_SPEC_FETCH_TIMEOUT_SECONDS: int = 10
 
     @field_validator("JWT_SECRET")
     @classmethod
@@ -72,6 +123,26 @@ class Settings(BaseSettings):
     @property
     def is_testing(self) -> bool:
         return self.ENVIRONMENT == "testing"
+
+    @property
+    def is_development(self) -> bool:
+        return self.ENVIRONMENT == "development"
+
+    @property
+    def r2_endpoint(self) -> str:
+        """Derive R2 endpoint from account_id if not explicitly set."""
+        if self.R2_ENDPOINT_URL:
+            return self.R2_ENDPOINT_URL
+        if self.R2_ACCOUNT_ID:
+            return f"https://{self.R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
+        return ""
+
+    @property
+    def sentry_sample_rate(self) -> float:
+        """100% in dev, 10% in prod unless overridden."""
+        if self.SENTRY_TRACES_SAMPLE_RATE:
+            return self.SENTRY_TRACES_SAMPLE_RATE
+        return 1.0 if self.is_development else 0.1
 
 
 settings = Settings()

@@ -15,6 +15,7 @@ class HealthResponse(BaseModel):
     version: str = "0.1.0"
     db: str = "ok"
     redis: str = "ok"
+    worker: str = "down"  # ok | down — Celery worker liveness
 
 
 class APIHealthResponse(BaseModel):

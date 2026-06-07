@@ -2,6 +2,12 @@
 
 All structured errors follow the format:
     {"error": {"code": "ERROR_CODE", "message": "Human-readable message"}}
+
+The `NotImplementedFeatureError` is special: route stubs in the Wave 0
+Skeleton return it with status 501 to signal "this endpoint exists in
+the contract but the real implementation lands in a later feature
+agent."  Future feature agents must REPLACE these stubs with real
+logic and remove the error.
 """
 
 from __future__ import annotations
@@ -51,15 +57,63 @@ class ConflictError(AppError):
 class ValidationError(AppError):
     """Input validation failure (422)."""
 
-    def __init__(self, message: str = "Validation error") -> None:
+    def __init__(self, message: str = "Validation error", field: str | None = None) -> None:
         super().__init__(code="VALIDATION_ERROR", message=message, status_code=422)
+        self.field = field
+
+
+class RateLimitError(AppError):
+    """Rate limit exceeded (429)."""
+
+    def __init__(
+        self,
+        message: str = "Rate limit exceeded",
+        retry_after: int = 60,
+    ) -> None:
+        super().__init__(code="RATE_LIMIT_EXCEEDED", message=message, status_code=429)
+        self.retry_after = retry_after
+
+
+class LockedError(AppError):
+    """Account locked (423)."""
+
+    def __init__(
+        self,
+        message: str = "Account temporarily locked",
+        retry_after: int = 900,
+    ) -> None:
+        super().__init__(code="ACCOUNT_LOCKED", message=message, status_code=423)
+        self.retry_after = retry_after
+
+
+class UpstreamError(AppError):
+    """External service failure (502)."""
+
+    def __init__(self, message: str = "Upstream service error") -> None:
+        super().__init__(code="UPSTREAM_ERROR", message=message, status_code=502)
+
+
+class NotImplementedFeatureError(AppError):
+    """A route stub that exists in the skeleton but has not been implemented yet.
+
+    Feature agents must REPLACE every route raising this with real logic.
+    Returning 501 lets clients distinguish "endpoint reserved, coming soon"
+    from generic 404s while keeping the contract stable.
+    """
+
+    def __init__(self, message: str = "Not implemented") -> None:
+        super().__init__(code="NOT_IMPLEMENTED", message=message, status_code=501)
 
 
 def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
     """Handle AppError subclasses."""
+    headers: dict[str, str] = {}
+    if isinstance(exc, RateLimitError | LockedError):
+        headers["Retry-After"] = str(exc.retry_after)
     return JSONResponse(
         status_code=exc.status_code,
         content={"error": {"code": exc.code, "message": exc.message}},
+        headers=headers or None,
     )
 
 
