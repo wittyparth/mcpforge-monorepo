@@ -212,14 +212,18 @@ Free tier stack: Vercel (web) + Render (api) + Neon (Postgres) + Upstash (Redis)
 1. Sign up at https://neon.tech (free tier: 0.5GB, scales to zero)
 2. Create project `mcpforge-prod` in `us-east-1`
 3. Copy the **pooled** connection string → save as `DATABASE_URL`
-4. Format: `postgresql+asyncpg://USER:PASS@HOST.neon.tech/DBNAME?sslmode=require`
+4. **Transform the URL before pasting into Render:**
+   - Take what Neon gives you (looks like `postgresql://USER:PASS@HOST/DB?sslmode=require&channel_binding=require`)
+   - Change `postgresql://` → `postgresql+asyncpg://` (SQLAlchemy async driver prefix — REQUIRED, app will fail to start without it)
+   - **Delete** `&channel_binding=require` (asyncpg handles this poorly, causes intermittent auth failures)
+   - Final: `postgresql+asyncpg://USER:PASS@HOST/DB?sslmode=require`
 
 ### 2. Cache (Upstash)
 
 1. Sign up at https://upstash.com (free tier: 10K cmd/day)
 2. Create Redis database in `us-east-1`
 3. Copy the **TLS** URL → save as `REDIS_URL`
-4. Format: `rediss://default:PASS@HOST.upstash.io:6379`
+4. Format: `rediss://default:PASS@HOST.upstash.io:6379` (the `rediss://` with double-s is TLS — use it, not `redis://`)
 
 ### 3. Backend (Render)
 
@@ -230,39 +234,47 @@ Free tier stack: Vercel (web) + Render (api) + Neon (Postgres) + Upstash (Redis)
    - Health check on `/health`
    - Auto-deploy on push to `main`
 4. After first deploy fails (no env vars), open service → **Environment**:
-   - `DATABASE_URL` = (from step 1)
+   - `DATABASE_URL` = (transformed URL from step 1)
    - `REDIS_URL` = (from step 2)
-   - `JWT_SECRET` = (Render auto-generates; copy and save)
-   - `CORS_ORIGINS` = `["https://YOUR-APP.vercel.app"]` (set after step 4)
+   - `JWT_SECRET` = (Render auto-generates; copy and save — 32+ chars)
+   - `CORS_ORIGINS` = `["https://YOUR-APP.vercel.app"]` (placeholder for now, update in step 5)
    - `ENVIRONMENT` = `production`
    - `LOG_LEVEL` = `INFO`
 5. **Manual deploy** to pick up env vars
-6. Run migrations from Render Shell: `alembic upgrade head`
-7. Verify: `curl https://mcpforge-api.onrender.com/health` → `{"status":"ok",...}`
+6. Run migrations from Render Shell: `cd /opt/render/project/src/apps/api && alembic upgrade head`
+7. Verify: `curl https://mcpforge-api.onrender.com/health` → `{"status":"ok","version":"0.1.0","db":"ok","redis":"ok"}`
 
 ### 4. Frontend (Vercel)
 
 1. Sign up at https://vercel.com with GitHub
 2. **Add New Project** → import this repo
-3. Vercel reads `vercel.json` at repo root, auto-detects `apps/web`
+3. **Set Root Directory** in project settings to `apps/web` (Vercel's project setting, not in any config file). Vercel auto-detects pnpm workspaces + Turborepo + Next.js from there.
 4. **Environment Variables**:
-   - `NEXT_PUBLIC_API_URL` = `https://mcpforge-api.onrender.com`
-   - `NEXT_PUBLIC_APP_URL` = `https://YOUR-APP.vercel.app`
+   - `NEXT_PUBLIC_API_URL` = `https://mcpforge-api-xxx.onrender.com` (from step 3, no trailing slash)
+   - `NEXT_PUBLIC_APP_URL` = leave empty for now (update after first deploy)
 5. Deploy. First build: ~2 min.
-6. After deploy succeeds, copy the Vercel URL → go back to Render step 4 and update `CORS_ORIGINS` with the real URL (no trailing slash, exact match).
+6. After deploy succeeds, copy the Vercel URL (e.g. `https://mcpforge-monorepo.vercel.app`).
 
 ### 5. Wire backend to frontend
 
-1. After step 4, update Render `CORS_ORIGINS` with the real Vercel URL
-2. Re-deploy backend (auto on next push, or manual)
-3. End-to-end test: visit Vercel URL → register → create server → call MCP endpoint
+1. Go back to Render service → **Environment** → update `CORS_ORIGINS` to the EXACT Vercel URL from step 4 (no trailing slash, in quotes):
+   ```
+   ["https://mcpforge-monorepo.vercel.app"]
+   ```
+2. **Manual Deploy** to pick up the new env var.
+3. Update Vercel's `NEXT_PUBLIC_APP_URL` with the same Vercel URL (for future OAuth redirects).
+4. End-to-end test: visit Vercel URL → register → create server → confirm Render logs show the API call
 
 ### Gotchas
 
-- Render free tier **sleeps after 15 min** — first request takes ~30s. Either accept the cold start or upgrade to a paid plan.
-- Neon free tier **scales to zero after 5 min** — first DB query takes ~2s. Same trade-off.
-- Cookie `Secure` flag is enabled in production (`ENVIRONMENT=production`) — httpOnly cookies require HTTPS.
-- Vercel monorepo detection: if it picks the wrong root, set **Root Directory** to `apps/web` in project settings.
+- **Neon URL prefix:** The most common deploy failure is forgetting to change `postgresql://` to `postgresql+asyncpg://` in `DATABASE_URL`. The error you'll see is something like `ImportError: asyncpg not loaded` or `dialect 'postgresql' not supported`. Fix: add the prefix, redeploy.
+- **Neon `channel_binding=require`:** asyncpg sometimes fails to negotiate this. If you get `password authentication failed` randomly, remove it.
+- **Render free tier sleeps** after 15 min — first request takes ~30s. Either accept the cold start or upgrade to a paid plan.
+- **Neon free tier scales to zero** after 5 min — first DB query takes ~2s. Same trade-off.
+- **Cookie `Secure` flag** is enabled in production (`ENVIRONMENT=production`) — httpOnly cookies require HTTPS, which Render and Vercel both provide automatically.
+- **Vercel `rootDirectory` is a project setting, not a `vercel.json` property.** Setting it in `vercel.json` causes `Invalid request: should NOT have additional property rootDirectory`. Use the Vercel project settings UI instead.
+- **Render Blueprint `rootDir` is a footgun.** If you set `rootDir: ./apps/api` AND `dockerContext: ./apps/api`, the context resolves to `/opt/render/project/src/apps/api/apps` (double-prefix) and the build fails with `lstat ... no such file or directory`. Two fixes: (a) remove `rootDir` entirely and let `dockerContext: ./apps/api` resolve relative to repo root, or (b) keep `rootDir` and set `dockerContext: .`. We use (a).
+- **Render Blueprint `envVars` with `sync: false` are required, not optional.** They show as empty on the service dashboard after first deploy — you MUST set them or the service crashes. `CORS_ORIGINS` and any secret URL are always `sync: false`. Only safe-to-commit defaults (like `LOG_LEVEL=INFO`) get hardcoded values.
 
 ## What to work on next
 
@@ -273,7 +285,7 @@ Free tier stack: Vercel (web) + Render (api) + Neon (Postgres) + Upstash (Redis)
 - [x] Frontend: landing, auth pages, dashboard, server list, server create, server detail, settings
 - [x] Shared types auto-generated from OpenAPI (`@mcpforge/shared-types`, 1064 lines)
 - [x] End-to-end test passes locally: register → cookie set → /me → create server → CORS verified
-- [x] CI (lint, type-check, tests, build), deployment configs (render.yaml, vercel.json, Dockerfile)
+- [x] CI (lint, type-check, tests, build), deployment configs (render.yaml, Dockerfile)
 
 ### Phase 2 — OpenAPI spec ingestion (the actual product)
 

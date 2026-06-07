@@ -6,7 +6,6 @@ services:
     region: oregon
     dockerfilePath: ./apps/api/Dockerfile
     dockerContext: ./apps/api
-    rootDir: ./apps/api
     autoDeploy: true
     branch: main
     healthCheckPath: /health
@@ -20,7 +19,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ORIGINS
-        value: https://mcpforge.vercel.app
+        sync: false
       - key: LOG_LEVEL
         value: INFO
     buildFilter:
