@@ -22,6 +22,14 @@ def upgrade() -> None:
         "users",
         sa.Column("stripe_customer_id", sa.String(100), nullable=True, unique=True),
     )
+    op.add_column(
+        "users",
+        sa.Column("password_changed_at", sa.DateTime(timezone=True), nullable=True),
+    )
+    op.add_column(
+        "users",
+        sa.Column("last_login_at", sa.DateTime(timezone=True), nullable=True),
+    )
 
     op.create_table(
         "subscriptions",
@@ -71,3 +79,5 @@ def downgrade() -> None:
     op.drop_index("idx_subscriptions_stripe_customer", table_name="subscriptions")
     op.drop_table("subscriptions")
     op.drop_column("users", "stripe_customer_id")
+    op.drop_column("users", "password_changed_at")
+    op.drop_column("users", "last_login_at")
