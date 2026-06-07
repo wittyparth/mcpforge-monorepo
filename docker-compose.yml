@@ -1,0 +1,97 @@
+name: mcpforge-dev
+
+# Local development stack: Postgres 16 + Redis 7 + FastAPI + Celery worker.
+# Run with: `docker compose up`
+#
+# This file is the Wave 0 deliverable. It does NOT replace the production
+# stack on Render + Neon + Upstash — those remain the deployment targets.
+# This is purely for local development so contributors don't need a
+# system-wide Postgres/Redis install.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mcpforge-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mcpforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d mcpforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mcpforge-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+    container_name: mcpforge-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/mcpforge
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: dev-only-jwt-secret-please-change-in-prod-min-32-chars
+      CORS_ORIGINS: '["http://localhost:3000"]'
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./apps/api/app:/app/app
+      - ./apps/api/alembic:/app/alembic
+      - ./apps/api/alembic.ini:/app/alembic.ini
+
+  worker:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile.dev
+    container_name: mcpforge-worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/mcpforge
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: dev-only-jwt-secret-please-change-in-prod-min-32-chars
+    volumes:
+      - ./apps/api/app:/app/app
+    command:
+      - "uv"
+      - "run"
+      - "celery"
+      - "-A"
+      - "app.core.celery_app"
+      - "worker"
+      - "-Q"
+      - "default,ai,scanner,analytics"
+      - "-l"
+      - "info"
+      - "--concurrency=2"
+
+volumes:
+  postgres_data:
+    name: mcpforge-postgres-data

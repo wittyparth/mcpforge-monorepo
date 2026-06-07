@@ -1,0 +1,32 @@
+# syntax=docker/dockerfile:1.7
+# Dev-only Dockerfile. Mounts the app/ directory as a volume for live reload
+# and installs dev dependencies (pytest, ruff, mypy, respx, fakeredis, etc.).
+# Use docker compose up to run the full local stack.
+FROM python:3.12-slim
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install ALL deps (including dev)
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --all-extras
+
+# App code is mounted as a volume in docker-compose for live reload
+COPY app ./app
+COPY alembic ./alembic
+COPY alembic.ini ./
+COPY start.sh ./
+RUN chmod +x start.sh
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \
+    CMD curl -fsS http://localhost:8000/health || exit 1
+
+CMD ["uv", "run", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
