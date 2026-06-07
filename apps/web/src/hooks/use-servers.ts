@@ -42,7 +42,7 @@ export function useCreateServer() {
     onSuccess: (server) => {
       void queryClient.invalidateQueries({ queryKey: SERVERS_KEY });
       toast.success("Server created successfully!");
-      router.push(`/dashboard/servers/${server.slug}`);
+      router.push(`/dashboard/servers/${server.id}`);
     },
     onError: (error: unknown) => {
       if (error instanceof ApiClientError) {

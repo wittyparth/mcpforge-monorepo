@@ -112,7 +112,7 @@ export function useSelectTools(specId: string) {
     mutationFn: (selection: ToolSelectionRequest) =>
       api.specs.selectTools(specId, selection),
     onSuccess: (server) => {
-      void queryClient.invalidateQueries({ queryKey: ["server", server.slug] });
+      void queryClient.invalidateQueries({ queryKey: ["server", server.id] });
       toast.success("Tools selected successfully");
     },
     onError: (error: unknown) => {

@@ -100,9 +100,12 @@ async function request<T>(
 }
 
 // API client with typed methods matching the backend endpoints
-async function* buildStatusStream(id: string): AsyncIterable<BuildStatusEvent> {
+async function* buildStatusStream(
+  id: string,
+  signal?: AbortSignal,
+): AsyncIterable<BuildStatusEvent> {
   const url = `${API_URL}/api/v1/servers/${id}/build-status`;
-  const response = await fetch(url, { credentials: "include" });
+  const response = await fetch(url, { credentials: "include", signal });
 
   if (!response.ok) {
     let errorBody: ApiError | null = null;
@@ -129,6 +132,7 @@ async function* buildStatusStream(id: string): AsyncIterable<BuildStatusEvent> {
 
   try {
     while (true) {
+      if (signal?.aborted) break;
       const { done, value } = await reader.read();
       if (done) break;
 
@@ -226,7 +230,8 @@ export const api = {
     build: {
       start: (id: string) =>
         request<McpServer>("POST", `/api/v1/servers/${id}/build`),
-      getStatus: (id: string) => buildStatusStream(id),
+      getStatus: (id: string, signal?: AbortSignal) =>
+        buildStatusStream(id, signal),
     },
   },
 

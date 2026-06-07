@@ -6,13 +6,13 @@ import type { CredentialCreateRequest, CredentialTestRequest } from "@/types/api
 import { toast } from "sonner";
 
 /**
- * Fetch all credentials for a server by slug.
+ * Fetch all credentials for a server by serverId.
  */
-export function useCredentials(slug: string) {
+export function useCredentials(serverId: string) {
   return useQuery({
-    queryKey: ["server", slug, "credentials"],
-    queryFn: () => api.servers.credentials.list(slug),
-    enabled: slug.length > 0,
+    queryKey: ["server", serverId, "credentials"],
+    queryFn: () => api.servers.credentials.list(serverId),
+    enabled: serverId.length > 0,
   });
 }
 
@@ -21,15 +21,15 @@ export function useCredentials(slug: string) {
  *
  * On success, invalidates the credentials query and shows a success toast.
  */
-export function useCreateCredential(slug: string) {
+export function useCreateCredential(serverId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (input: CredentialCreateRequest) =>
-      api.servers.credentials.create(slug, input),
+      api.servers.credentials.create(serverId, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: ["server", slug, "credentials"],
+        queryKey: ["server", serverId, "credentials"],
       });
       toast.success("Credential created successfully");
     },
@@ -49,10 +49,10 @@ export function useCreateCredential(slug: string) {
  * Shows the result (success or failure) in a toast. Does NOT invalidate
  * queries since the test does not change server state.
  */
-export function useTestCredential(slug: string) {
+export function useTestCredential(serverId: string) {
   return useMutation({
     mutationFn: (input: CredentialTestRequest) =>
-      api.servers.credentials.test(slug, input),
+      api.servers.credentials.test(serverId, input),
     onSuccess: (result) => {
       if (result.success) {
         toast.success(`Connection successful (${result.latency_ms}ms)`);
@@ -76,15 +76,15 @@ export function useTestCredential(slug: string) {
  * Variables: the `envVarName` to delete.
  * On success, invalidates the credentials query and shows a success toast.
  */
-export function useDeleteCredential(slug: string) {
+export function useDeleteCredential(serverId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (envVarName: string) =>
-      api.servers.credentials.delete(slug, envVarName),
+      api.servers.credentials.delete(serverId, envVarName),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: ["server", slug, "credentials"],
+        queryKey: ["server", serverId, "credentials"],
       });
       toast.success("Credential deleted successfully");
     },

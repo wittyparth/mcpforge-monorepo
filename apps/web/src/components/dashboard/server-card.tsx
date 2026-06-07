@@ -21,7 +21,7 @@ interface ServerCardProps {
 
 export function ServerCard({ server }: ServerCardProps) {
   return (
-    <Link href={`/dashboard/servers/${server.slug}`}>
+      <Link href={`/dashboard/servers/${server.id}`}>
       <Card className="transition-colors hover:bg-accent/50 cursor-pointer">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-base font-medium">{server.name}</CardTitle>

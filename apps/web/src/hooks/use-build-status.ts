@@ -11,13 +11,13 @@ import { toast } from "sonner";
  *
  * On success, invalidates server-level queries and shows a success toast.
  */
-export function useStartBuild(slug: string) {
+export function useStartBuild(serverId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => api.servers.build.start(slug),
+    mutationFn: () => api.servers.build.start(serverId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ["server", slug] });
+      void queryClient.invalidateQueries({ queryKey: ["server", serverId] });
       toast.success("Build started");
     },
     onError: (error: unknown) => {
@@ -35,7 +35,7 @@ export function useStartBuild(slug: string) {
  *
  * This hook does NOT auto-start on mount. The component must call `start()`
  * when the user triggers a build. The `stop()` function or unmounting
- * cancels the subscription.
+ * cancels the subscription by aborting the underlying fetch.
  *
  * Returns:
  * - `status`: The latest `BuildStatusEvent` (null before any event)
@@ -44,7 +44,7 @@ export function useStartBuild(slug: string) {
  * - `start`: Call to begin listening for status events
  * - `stop`: Call to abort the subscription
  */
-export function useBuildStatus(slug: string) {
+export function useBuildStatus(serverId: string) {
   const [status, setStatus] = useState<BuildStatusEvent | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -54,10 +54,14 @@ export function useBuildStatus(slug: string) {
     setIsStreaming(true);
     setError(null);
     setStatus(null);
-    abortRef.current = new AbortController();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     try {
-      for await (const event of api.servers.build.getStatus(slug)) {
+      for await (const event of api.servers.build.getStatus(
+        serverId,
+        controller.signal,
+      )) {
         setStatus(event);
 
         if (event.stage === "complete") {
@@ -69,13 +73,13 @@ export function useBuildStatus(slug: string) {
         }
       }
     } catch (e) {
-      if (!abortRef.current?.signal.aborted) {
+      if (!controller.signal.aborted) {
         setError(e as Error);
         setIsStreaming(false);
         toast.error("Build status connection lost");
       }
     }
-  }, [slug]);
+  }, [serverId]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();

@@ -9,9 +9,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function ServerDetailPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { slug } = use(params);
+  const { id } = use(params);
 
   return (
     <div className="space-y-6">
@@ -26,7 +26,7 @@ export default function ServerDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>{slug}</CardTitle>
+          <CardTitle>{id}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-12 text-center">

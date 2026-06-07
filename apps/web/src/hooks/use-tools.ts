@@ -2,17 +2,17 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiClientError } from "@/lib/api";
-import type { ToolListResponse, ToolUpdateRequest } from "@/types/api";
+import type { ToolUpdateRequest } from "@/types/api";
 import { toast } from "sonner";
 
 /**
- * Fetch all tools for a server by slug.
+ * Fetch all tools for a server by serverId.
  */
-export function useTools(slug: string) {
+export function useTools(serverId: string) {
   return useQuery({
-    queryKey: ["server", slug, "tools"],
-    queryFn: () => api.servers.tools.list(slug),
-    enabled: slug.length > 0,
+    queryKey: ["server", serverId, "tools"],
+    queryFn: () => api.servers.tools.list(serverId),
+    enabled: serverId.length > 0,
   });
 }
 
@@ -25,17 +25,17 @@ export function useTools(slug: string) {
  *
  * On success, invalidates the tools query and shows a success toast.
  */
-export function useUpdateTool(slug: string) {
+export function useUpdateTool(serverId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (variables: { name: string } & ToolUpdateRequest) => {
       const { name, ...updates } = variables;
-      return api.servers.tools.update(slug, name, updates);
+      return api.servers.tools.update(serverId, name, updates);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: ["server", slug, "tools"],
+        queryKey: ["server", serverId, "tools"],
       });
       toast.success("Tool updated successfully");
     },
@@ -55,14 +55,14 @@ export function useUpdateTool(slug: string) {
  * The backend returns 501 (NotImplementedFeatureError) — this is
  * handled gracefully with an info toast instead of an error.
  */
-export function useEnhanceTools(slug: string) {
+export function useEnhanceTools(serverId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => api.servers.tools.enhance(slug),
+    mutationFn: () => api.servers.tools.enhance(serverId),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: ["server", slug, "tools"],
+        queryKey: ["server", serverId, "tools"],
       });
       toast.success("Tools enhanced successfully");
     },
