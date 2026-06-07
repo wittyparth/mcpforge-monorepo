@@ -1,0 +1,33 @@
+# syntax=docker/dockerfile:1.7
+# ──────────────────────────────────────────────────────────────────
+# Dockerfile.dev — Next.js frontend (development mode)
+# ──────────────────────────────────────────────────────────────────
+# Uses turbopack for fast refresh. Mounts src/ and public/ as volumes
+# so changes reflect immediately. The build context is the monorepo
+# root (required for pnpm workspace resolution).
+# ──────────────────────────────────────────────────────────────────
+FROM node:22-slim AS base
+
+RUN corepack enable && npm i -g pnpm@9
+
+WORKDIR /app
+
+# ── Install dependencies (layer cache-friendly) ──────────────────
+# Copy workspace manifests first to leverage Docker layer caching
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+# Copy all workspace package manifests (required by pnpm --filter)
+COPY apps/web/package.json ./apps/web/
+COPY packages/shared-types/package.json ./packages/shared-types/
+COPY packages/tsconfig/ ./packages/tsconfig/
+
+# Install — frozen-lockfile ensures CI-grade reproducibility
+RUN pnpm install --frozen-lockfile
+
+# ── Copy remaining source (overwritten by volume mount in dev) ──
+COPY . .
+
+EXPOSE 3000
+
+# Turbopack for instant Fast Refresh, host 0.0.0.0 for Docker
+CMD ["pnpm", "--filter", "@mcpforge/web", "dev"]

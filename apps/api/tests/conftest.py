@@ -21,19 +21,12 @@ from app.models.base import Base
 # can override these with monkeypatch.
 settings.HIBP_ENABLED = False
 
-# Use SQLite by default for local testing. Override with
-# `DATABASE_URL=postgresql+asyncpg://...` env var for CI.
-_TEST_SQLITE = "sqlite+aiosqlite:///./test.db"
-TEST_DATABASE_URL = settings.TEST_DATABASE_URL if hasattr(settings, 'TEST_DATABASE_URL') else _TEST_SQLITE
-if "postgresql" in TEST_DATABASE_URL or "localhost" in TEST_DATABASE_URL:
-    # Called from CI where a real PostgreSQL test database is available.
-    # Use the provided URL directly; else fall back to SQLite.
-    if "sqlite" not in str(TEST_DATABASE_URL):
-        pass  # CI provides postgres
-    else:
-        TEST_DATABASE_URL = _TEST_SQLITE
-else:
-    TEST_DATABASE_URL = _TEST_SQLITE
+# SQLite by default for local dev (zero setup).
+# CI workflows override via DATABASE_URL=postgresql+asyncpg://...
+_DEFAULT_SQLITE = "sqlite+aiosqlite:///./test.db"
+TEST_DATABASE_URL = settings.DATABASE_URL
+if "sqlite" not in str(TEST_DATABASE_URL).lower():
+    TEST_DATABASE_URL = _DEFAULT_SQLITE
 
 
 @pytest_asyncio.fixture

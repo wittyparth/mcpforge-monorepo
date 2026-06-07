@@ -1,14 +1,20 @@
 name: mcpforge-dev
 
-# Local development stack: Postgres 16 + Redis 7 + FastAPI + Celery worker.
-# Run with: `docker compose up`
+# ────────────────────────────────────────────────────────────────────
+# MCPForge Local Dev Stack — single command to start everything.
 #
-# This file is the Wave 0 deliverable. It does NOT replace the production
-# stack on Render + Neon + Upstash — those remain the deployment targets.
-# This is purely for local development so contributors don't need a
-# system-wide Postgres/Redis install.
+#   docker compose up --build    ← ONE COMMAND. Starts ALL services.
+#   docker compose down          ← Stop everything.
+#
+# What runs where:
+#   postgres :5432  |  redis :6379  |  api :8000  |  worker (bg)  |  web :3000
+# ────────────────────────────────────────────────────────────────────
+# Production: Render + Neon + Upstash (see render.yaml).
+# This compose file is purely for local development.
+# ────────────────────────────────────────────────────────────────────
 
 services:
+  # ── Database ────────────────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: mcpforge-postgres
@@ -24,8 +30,10 @@ services:
       test: ["CMD-SHELL", "pg_isready -U postgres -d mcpforge"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+    restart: unless-stopped
 
+  # ── Cache ───────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: mcpforge-redis
@@ -36,7 +44,9 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+    restart: unless-stopped
 
+  # ── FastAPI backend ──────────────────────────────────────────────
   api:
     build:
       context: ./apps/api
@@ -53,14 +63,23 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/mcpforge
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: dev-only-jwt-secret-please-change-in-prod-min-32-chars
-      CORS_ORIGINS: '["http://localhost:3000"]'
+      CORS_ORIGINS: '["http://localhost:3000", "http://localhost:8000"]'
     ports:
       - "8000:8000"
     volumes:
+      # Mount source for hot-reload via uvicorn --reload
       - ./apps/api/app:/app/app
       - ./apps/api/alembic:/app/alembic
       - ./apps/api/alembic.ini:/app/alembic.ini
+    develop:
+      watch:
+        - path: ./apps/api/app
+          action: sync
+          target: /app/app
+    # Runs migrations then starts uvicorn with --reload
+    command: ["./start-dev.sh"]
 
+  # ── Celery worker ────────────────────────────────────────────────
   worker:
     build:
       context: ./apps/api
@@ -91,6 +110,31 @@ services:
       - "-l"
       - "info"
       - "--concurrency=2"
+
+  # ── Next.js frontend ────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile.dev
+    container_name: mcpforge-web
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source for Next.js fast-refresh / hot reload
+      - ./apps/web/src:/app/apps/web/src
+      - ./apps/web/public:/app/apps/web/public
+    develop:
+      watch:
+        - path: ./apps/web/src
+          action: sync
+          target: /app/apps/web/src
+    # Start with turbopack for fast dev
+    command: ["pnpm", "--filter", "@mcpforge/web", "dev"]
 
 volumes:
   postgres_data:

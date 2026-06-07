@@ -8,6 +8,11 @@
     "dev": "turbo run dev --parallel",
     "dev:api": "turbo run dev --filter=@mcpforge/api",
     "dev:web": "turbo run dev --filter=@mcpforge/web",
+
+    "dev:up": "./scripts/dev.sh",
+    "dev:up:build": "./scripts/dev.sh --build",
+    "dev:stop": "./scripts/dev.sh --stop",
+
     "lint": "turbo run lint",
     "type-check": "turbo run type-check",
     "test": "turbo run test",

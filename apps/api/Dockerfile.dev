@@ -21,12 +21,15 @@ RUN uv sync --frozen --all-extras
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
-COPY start.sh ./
-RUN chmod +x start.sh
+COPY start.sh ./start.sh
+COPY start-dev.sh ./start-dev.sh
+RUN chmod +x start.sh start-dev.sh
 
 EXPOSE 8000
 
+# healthcheck hits /health with a 20s grace period for migrations + startup
 HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=5 \
     CMD curl -fsS http://localhost:8000/health || exit 1
 
-CMD ["uv", "run", "uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+# start-dev.sh runs `alembic upgrade head` then `uvicorn --reload`
+CMD ["./start-dev.sh"]

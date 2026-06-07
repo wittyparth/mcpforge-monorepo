@@ -50,25 +50,32 @@ mcpforge-monorepo/
 # Install everything
 pnpm install
 
-# Start both apps in dev mode (parallel)
-pnpm dev
+# ── Local development (single command) ─────────────────────────────
+# Start all services: Postgres + Redis + FastAPI + Celery + Next.js
+pnpm dev:up
 
-# Start only one
-pnpm dev:api
-pnpm dev:web
+# Start with forced rebuild (if deps changed)
+pnpm dev:up:build
 
-# Build all
-pnpm build
+# Stop everything
+pnpm dev:stop
 
-# Lint + type check
-pnpm lint
-pnpm type-check
+# Attach to logs
+docker compose logs -f
 
-# Test
-pnpm test
+# ── Individual apps (outside Docker) ──────────────────────────────
+# These are useful if you're iterating on a specific app and don't
+# need the full stack. Run `docker compose up postgres redis` for infra.
+pnpm dev                  # turbo parallel: uvicorn + next.js
+pnpm dev:api              # uvicorn --reload only
+pnpm dev:web              # next.js dev only
 
-# Format
-pnpm format
+# ── Build / CI ────────────────────────────────────────────────────
+pnpm build                # build everything
+pnpm lint                 # ruff (api) + eslint (web)
+pnpm type-check           # mypy (api) + tsc (web)
+pnpm test                 # pytest (api) + vitest (web)
+pnpm format               # prettier
 ```
 
 ### Backend-specific (apps/api)
