@@ -71,7 +71,6 @@ secrets/
 # Architecture & research docs (local planning only — not committed)
 /architecture/
 /.planning/
-/planning/
 
 # oh-my-opencode runtime cache
 .omo/

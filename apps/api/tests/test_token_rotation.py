@@ -2,13 +2,12 @@
 
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
 
 from app.services.auth.token_rotation import (
-    RotationResult,
     check_and_mark_jti,
     is_jti_used,
     revoke_all_for_user,
@@ -26,7 +25,7 @@ class _FakeRedis:
     async def set(self, key: str, value: bytes, ex: int | None = None, nx: bool = False):  # noqa: ARG002
         if nx and key in self.kv:
             return None
-        if isinstance(value, (bytes, bytearray)):
+        if isinstance(value, bytes | bytearray):
             self.kv[key] = value.decode()
         else:
             self.kv[key] = str(value)
@@ -37,7 +36,7 @@ class _FakeRedis:
 
     async def sadd(self, key: str, value) -> int:
         s = self.sets.setdefault(key, set())
-        s.add(value.decode() if isinstance(value, (bytes, bytearray)) else str(value))
+        s.add(value.decode() if isinstance(value, bytes | bytearray) else str(value))
         return 1
 
     async def smembers(self, key: str) -> set[bytes]:

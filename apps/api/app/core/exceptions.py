@@ -105,14 +105,96 @@ class NotImplementedFeatureError(AppError):
         super().__init__(code="NOT_IMPLEMENTED", message=message, status_code=501)
 
 
+class InvalidURLError(AppError):
+    """URL is not valid (400)."""
+
+    def __init__(self, message: str = "URL is not valid", suggestion: str | None = None) -> None:
+        super().__init__(code="INVALID_URL", message=message, status_code=400)
+        self.suggestion = suggestion
+
+
+class SpecParseError(AppError):
+    """Failed to parse OpenAPI spec (422)."""
+
+    def __init__(
+        self,
+        message: str = "Failed to parse spec",
+        line: int | None = None,
+        column: int | None = None,
+    ) -> None:
+        super().__init__(code="SPEC_PARSE_ERROR", message=message, status_code=422)
+        self.line = line
+        self.column = column
+
+
+class SpecValidationError(AppError):
+    """OpenAPI spec validation failure (422)."""
+
+    def __init__(
+        self,
+        message: str = "Spec validation failed",
+        details: list[dict[str, str]] | None = None,
+    ) -> None:
+        super().__init__(code="SPEC_VALIDATION_ERROR", message=message, status_code=422)
+        self.details = details or []
+
+
+class SpecTooLargeError(AppError):
+    """OpenAPI spec exceeds size limit (413)."""
+
+    def __init__(self, message: str = "Spec exceeds maximum allowed size") -> None:
+        super().__init__(code="SPEC_TOO_LARGE", message=message, status_code=413)
+
+
+class FetchTimeoutError(AppError):
+    """Timeout while fetching OpenAPI spec (504)."""
+
+    def __init__(self, message: str = "Timeout while fetching spec") -> None:
+        super().__init__(code="FETCH_TIMEOUT", message=message, status_code=504)
+
+
+class UnsupportedSpecVersionError(AppError):
+    """Unsupported OpenAPI spec version (422)."""
+
+    def __init__(
+        self,
+        message: str = "Unsupported OpenAPI version",
+        suggestion: str | None = None,
+    ) -> None:
+        super().__init__(code="UNSUPPORTED_SPEC_VERSION", message=message, status_code=422)
+        self.suggestion = suggestion
+
+
 def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
     """Handle AppError subclasses."""
     headers: dict[str, str] = {}
     if isinstance(exc, RateLimitError | LockedError):
         headers["Retry-After"] = str(exc.retry_after)
+
+    error_content: dict[str, str | int | list[dict[str, str]]] = {
+        "code": exc.code,
+        "message": exc.message,
+    }
+
+    suggestion = getattr(exc, "suggestion", None)
+    if suggestion is not None:
+        error_content["suggestion"] = suggestion
+
+    details = getattr(exc, "details", None)
+    if details:
+        error_content["details"] = details
+
+    line = getattr(exc, "line", None)
+    if line is not None:
+        error_content["line"] = line
+
+    column = getattr(exc, "column", None)
+    if column is not None:
+        error_content["column"] = column
+
     return JSONResponse(
         status_code=exc.status_code,
-        content={"error": {"code": exc.code, "message": exc.message}},
+        content={"error": error_content},
         headers=headers or None,
     )
 

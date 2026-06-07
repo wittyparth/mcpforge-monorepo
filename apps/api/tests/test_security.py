@@ -100,6 +100,7 @@ class TestRefreshToken:
     def test_expired_token_raises(self) -> None:
         # Manually construct an expired token by monkeypatching the encoder.
         from jose import jwt
+
         from app.core.config import settings
         expired = jwt.encode(
             {

@@ -32,7 +32,7 @@ class _FakeRedis:
         return self.kv.get(key)
 
     async def setex(self, key: str, ttl: int, value: bytes) -> None:  # noqa: ARG002
-        self.kv[key] = value.decode() if isinstance(value, (bytes, bytearray)) else str(value)
+        self.kv[key] = value.decode() if isinstance(value, bytes | bytearray) else str(value)
 
     async def delete(self, key: str) -> None:
         self.kv.pop(key, None)
@@ -53,7 +53,7 @@ def fake_redis():
 class TestInitiallyUnlocked:
     @pytest.mark.asyncio
     async def test_new_account_is_not_locked(self, fake_redis) -> None:
-        from app.services.auth.lockout import is_locked, get_status
+        from app.services.auth.lockout import get_status, is_locked
         assert await is_locked("user@example.com") is False
         status = await get_status("user@example.com")
         assert status.locked is False
@@ -71,7 +71,7 @@ class TestFailureTracking:
     @pytest.mark.asyncio
     async def test_lock_after_max_attempts(self, fake_redis, monkeypatch) -> None:
         from app.core.config import settings
-        from app.services.auth.lockout import record_failure, is_locked, get_status
+        from app.services.auth.lockout import get_status, is_locked, record_failure
         monkeypatch.setattr(settings, "LOCKOUT_MAX_ATTEMPTS", 3)
         for i in range(3):
             s = await record_failure("user@example.com")
@@ -88,7 +88,7 @@ class TestFailureTracking:
 class TestSuccessClears:
     @pytest.mark.asyncio
     async def test_record_success_resets_counter(self, fake_redis) -> None:
-        from app.services.auth.lockout import record_failure, record_success, get_status
+        from app.services.auth.lockout import get_status, record_failure, record_success
         await record_failure("user@example.com")
         await record_failure("user@example.com")
         await record_success("user@example.com")

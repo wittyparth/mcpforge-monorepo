@@ -11,7 +11,6 @@ import respx
 from app.core.config import settings
 from app.services.auth.hibp import HIBPResult, check_password_breached
 
-
 # SHA-1 of "password" — a well-known breached password.
 _PASSWORD_SHA1 = hashlib.sha1(b"password", usedforsecurity=False).hexdigest().upper()
 _PREFIX = _PASSWORD_SHA1[:5]

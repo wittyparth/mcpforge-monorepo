@@ -109,7 +109,7 @@ async def _revoke_family(r: Redis, user_id: UUID) -> int:
     members: set[bytes] = {m for m in raw_members if isinstance(m, bytes | bytearray)}
     if not members:
         return 0
-    pipe = await r.pipeline()  # type: ignore[misc]
+    pipe = await r.pipeline()
     for jti in members:
         jti_str = jti.decode() if isinstance(jti, bytes | bytearray) else jti
         pipe.set(_KEY_USED.format(jti=jti_str), b"1", ex=_TTL_SECONDS)

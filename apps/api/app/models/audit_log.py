@@ -15,8 +15,8 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, JSON
-from sqlalchemy.dialects.postgresql import INET, UUID as PG_UUID
+from sqlalchemy import JSON, DateTime, ForeignKey, String, Text
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, UUIDMixin

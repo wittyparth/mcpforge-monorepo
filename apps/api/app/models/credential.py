@@ -1,7 +1,4 @@
-"""Credential model — stores encrypted API credentials for MCP servers.
-
-# TODO(phase-2): Use AWS KMS for key management instead of local encryption.
-"""
+"""Credential model — stores encrypted API credentials for MCP servers."""
 
 from __future__ import annotations
 
@@ -41,6 +38,9 @@ class Credential(Base, UUIDMixin, TimestampMixin):
         PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
     )
     last_used_at: Mapped[datetime | None] = mapped_column(nullable=True)
+
+    auth_scheme: Mapped[str] = mapped_column(String(20), nullable=False, default="bearer")
+    auth_header_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     # Relationships
     server: Mapped[MCPServer] = relationship(

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from httpx import ASGITransport, AsyncClient
 import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
 
 from app.main import app
 

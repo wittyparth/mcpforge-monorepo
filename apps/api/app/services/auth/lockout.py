@@ -12,8 +12,9 @@ Keys:
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass
+from typing import Any
 from uuid import UUID
 
 from redis.asyncio import Redis
@@ -66,7 +67,7 @@ async def _key_for_email_or_userid(identifier: str | UUID) -> str:
 async def _run_redis(
     method: str | None = None,
     *args: object,
-    redis_func: Any = None,
+    redis_func: Callable[[Redis], Awaitable[Any]] | None = None,
     default_return: Any = None,
 ) -> Any:
     """Execute a Redis operation, failing OPEN on connection errors.
@@ -90,16 +91,19 @@ async def _run_redis(
 async def is_locked(identifier: str | UUID) -> bool:
     """Return True if the user is currently locked out."""
     key_id = await _key_for_email_or_userid(identifier)
-    async def _check(r):
+
+    async def _check(r: Redis) -> bool:
         return bool(await r.exists(_KEY_LOCKED.format(key=key_id)))
-    return await _run_redis(default_return=False, redis_func=_check)
+
+    result: bool = await _run_redis(default_return=False, redis_func=_check)
+    return result
 
 
 async def get_status(identifier: str | UUID) -> LockoutStatus:
     """Return the current lockout status for a user."""
     key_id = await _key_for_email_or_userid(identifier)
 
-    async def _get(r):
+    async def _get(r: Redis) -> LockoutStatus:
         locked_ttl = await r.ttl(_KEY_LOCKED.format(key=key_id))
         if locked_ttl and locked_ttl > 0:
             return LockoutStatus(locked=True, attempts=0, retry_after=int(locked_ttl))
@@ -107,7 +111,11 @@ async def get_status(identifier: str | UUID) -> LockoutStatus:
         attempts = int(fail_raw) if fail_raw else 0
         return LockoutStatus(locked=False, attempts=attempts, retry_after=0)
 
-    return await _run_redis(redis_func=_get, default_return=LockoutStatus(locked=False, attempts=0, retry_after=0))
+    result: LockoutStatus = await _run_redis(
+        redis_func=_get,
+        default_return=LockoutStatus(locked=False, attempts=0, retry_after=0),
+    )
+    return result
 
 
 async def record_failure(identifier: str | UUID) -> LockoutStatus:
@@ -122,26 +130,33 @@ async def record_failure(identifier: str | UUID) -> LockoutStatus:
     max_attempts = settings.LOCKOUT_MAX_ATTEMPTS
     duration = settings.LOCKOUT_DURATION_MINUTES * 60
 
-    async def _record(r):
+    async def _record(r: Redis) -> LockoutStatus:
         count = await r.incr(fail_key)
         await r.expire(fail_key, duration)
         if count >= max_attempts:
             await r.setex(locked_key, duration, b"1")
             await r.delete(fail_key)
             logger.warning(
-                "account_locked", identifier=key_id, attempts=count, duration_seconds=duration,
+                "account_locked",
+                identifier=key_id,
+                attempts=count,
+                duration_seconds=duration,
             )
             return LockoutStatus(locked=True, attempts=count, retry_after=duration)
         return LockoutStatus(locked=False, attempts=count, retry_after=0)
 
-    return await _run_redis(redis_func=_record, default_return=LockoutStatus(locked=False, attempts=0, retry_after=0))
+    result: LockoutStatus = await _run_redis(
+        redis_func=_record,
+        default_return=LockoutStatus(locked=False, attempts=0, retry_after=0),
+    )
+    return result
 
 
 async def record_success(identifier: str | UUID) -> None:
     """Clear the failure counter and any active lockout on successful login."""
     key_id = await _key_for_email_or_userid(identifier)
 
-    async def _clear(r):
+    async def _clear(r: Redis) -> None:
         await r.delete(_KEY_FAIL.format(key=key_id))
         await r.delete(_KEY_LOCKED.format(key=key_id))
 

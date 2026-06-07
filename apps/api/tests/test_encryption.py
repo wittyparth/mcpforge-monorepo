@@ -48,9 +48,9 @@ class TestInvalidToken:
         # Encrypt with key A, attempt to decrypt with key B → InvalidToken.
         # Use the Fernet API directly (not the app's cached instance) so
         # the key rotation scenario is testable.
-        from cryptography.fernet import Fernet as F
-        key_a = F(Fernet.generate_key())
-        key_b = F(Fernet.generate_key())
+        from cryptography.fernet import Fernet as FernetInstance
+        key_a = FernetInstance(Fernet.generate_key())
+        key_b = FernetInstance(Fernet.generate_key())
         ciphertext = key_a.encrypt(b"top secret")
         with pytest.raises(InvalidToken):
             key_b.decrypt(ciphertext)

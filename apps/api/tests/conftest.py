@@ -5,16 +5,18 @@ Uses a test PostgreSQL database by default. Falls back to SQLite for local runs.
 
 from __future__ import annotations
 
+import uuid
 from collections.abc import AsyncGenerator
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from app.api.deps import get_db
+from app.api.deps import get_current_user, get_db
 from app.core.config import settings
 from app.main import app
 from app.models.base import Base
+from app.models.user import User
 
 # Wave 0 hardening: disable features that make network calls or depend
 # on external services in the default test environment. Individual tests
@@ -63,6 +65,48 @@ async def client(test_session: AsyncSession) -> AsyncGenerator[AsyncClient, None
         yield test_session
 
     app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+    ) as ac:
+        yield ac
+
+    app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def auth_user(test_session: AsyncSession) -> User:
+    """Create a test user for use with the ``auth_client`` fixture."""
+    u = User(
+        email=f"auth-{uuid.uuid4().hex[:8]}@example.com",
+        password_hash="test-hash",
+    )
+    test_session.add(u)
+    await test_session.flush()
+    return u
+
+
+@pytest_asyncio.fixture
+async def auth_client(
+    test_session: AsyncSession, auth_user: User
+) -> AsyncGenerator[AsyncClient, None]:
+    """Async test client with the ``auth_user`` injected as the current user.
+
+    Overrides both ``get_db`` (→ ``test_session``) and ``get_current_user``
+    (→ ``auth_user``) so endpoint tests can call protected routes without
+    going through the real JWT decode path.
+    """
+
+    async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
+        yield test_session
+
+    def override_get_current_user() -> User:
+        return auth_user
+
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
 
     transport = ASGITransport(app=app)
     async with AsyncClient(

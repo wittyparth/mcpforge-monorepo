@@ -120,7 +120,7 @@ class Settings(BaseSettings):
                 pass
             # Fallback: comma-separated
             return [item.strip().strip('"').strip("'") for item in v.split(",") if item.strip()]
-        return ["http://localhost:3000"]
+        raise TypeError(f"Unexpected CORS_ORIGINS type: {type(v).__name__}")
 
     @field_validator("JWT_SECRET")
     @classmethod
