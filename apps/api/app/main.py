@@ -112,13 +112,30 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# ── Middleware (order matters — outermost first) ────────────────────────────
+# ── Middleware ─────────────────────────────────────────────────────────────
+# Starlette builds middleware in REVERSE order of `user_middleware` (last
+# added = outermost). So add middlewares INNERMOST first, OUTERMOST last.
+#
+# Known issue with ordering: if CORS is INSIDE CSRF, then when CSRF rejects
+# a request (no CSRF token), the response never passes through CORS and the
+# browser gets no Access-Control-Allow-Origin header. Therefore CORS must
+# be OUTER to CSRF (added after CSRF).
+#
+# Execution order on incoming request (outermost → innermost):
+#   AttachCSRFCookie → CORS → RateLimit → CSRF → RequestID → route handler
 
-# 1. Request ID — must be first so every other middleware and handler can
-#    tag log records with the request_id from contextvars.
+# 1. Request ID — innermost. Every middleware/handler benefits from having
+#    request_id available via contextvars.
 app.add_middleware(RequestIDMiddleware)
 
-# 2. CORS — runs before CSRF so preflight OPTIONS requests succeed.
+# 2. CSRF — rejects state-changing requests without a valid CSRF token.
+app.add_middleware(CSRFMiddleware)
+
+# 3. Rate limit — per-IP fixed window. Does not count CSRF-rejected reqs.
+app.add_middleware(RateLimitMiddleware)
+
+# 4. CORS — must be OUTER to CSRF + RateLimit so their rejection responses
+#    get Access-Control-Allow-Origin headers (browsers need these on errors).
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -126,13 +143,6 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-CSRF-Token"],
 )
-
-# 3. CSRF — must run BEFORE auth on state-changing requests so malicious
-#    cross-site requests can't even reach the auth check.
-app.add_middleware(CSRFMiddleware)
-
-# 4. Rate limit — last, so we don't count CSRF-rejected requests twice.
-app.add_middleware(RateLimitMiddleware)
 
 
 # ── Exception handlers ──────────────────────────────────────────────────────

@@ -34,13 +34,28 @@ CSRF_COOKIE_NAME = "csrf_token"
 CSRF_HEADER_NAME = "X-CSRF-Token"
 SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
-# Routes that are exempt from CSRF (cookie-auth refresh has no body, OAuth
-# callbacks come from external providers with their own state verification).
+# Routes that are exempt from CSRF.
+#
+# Rationale: CSRF protects authenticated sessions. Unauthenticated endpoints
+# (register, login, forgot/reset password) have no session to protect — the
+# attacker can't forge a request because there's no auth cookie to exploit.
+#
+# - register, login:  unauthenticated, no session
+# - forgot/reset:     unauthenticated, no session
+# - logout:           optional auth, clears cookies (harmless to call twice)
+# - refresh:          cookie-only, CSRF doesn't help (cookie is the credential)
+# - github/callback:  external OAuth with its own state verification
+# - billing/webhook:  Stripe-signed, independent verification
 _EXEMPT_PATHS = frozenset(
     {
+        "/api/v1/auth/register",
+        "/api/v1/auth/login",
+        "/api/v1/auth/logout",
         "/api/v1/auth/refresh",
+        "/api/v1/auth/forgot-password",
+        "/api/v1/auth/reset-password",
         "/api/v1/auth/github/callback",
-        "/api/v1/billing/webhook",  # Stripe-signed
+        "/api/v1/billing/webhook",
     }
 )
 
