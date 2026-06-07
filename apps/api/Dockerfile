@@ -37,6 +37,7 @@ ENV PATH="/app/.venv/bin:$PATH"
 COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
+COPY start.sh ./
 
 # Expose port
 EXPOSE 8000
@@ -45,5 +46,6 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" || exit 1
 
-# Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Entrypoint: run migrations on container start, then start uvicorn
+# This replaces the need for Render Shell (not available on free plan)
+CMD ["./start.sh"]
