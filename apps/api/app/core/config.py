@@ -6,6 +6,8 @@ Never read os.environ directly — use this module.
 
 from __future__ import annotations
 
+import json
+
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -96,6 +98,29 @@ class Settings(BaseSettings):
     MAX_AI_CREDITS_PER_USER_PER_DAY: int = 100
     MAX_SPEC_SIZE_BYTES: int = 5_242_880  # 5MB
     MAX_SPEC_FETCH_TIMEOUT_SECONDS: int = 10
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def validate_cors_origins(cls, v: str | list[str]) -> list[str]:
+        """Parse CORS origins that arrive as JSON strings from env vars.
+
+        pydantic-settings passes the raw env var value as a string. When
+        `list[str]` is the annotated type, it attempts JSON parsing but
+        may fall back to comma-splitting. This validator ensures the value
+        is correctly parsed regardless.
+        """
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return parsed
+            except (json.JSONDecodeError, TypeError):
+                pass
+            # Fallback: comma-separated
+            return [item.strip().strip('"').strip("'") for item in v.split(",") if item.strip()]
+        return ["http://localhost:3000"]
 
     @field_validator("JWT_SECRET")
     @classmethod
