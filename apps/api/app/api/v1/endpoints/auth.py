@@ -158,3 +158,41 @@ async def get_me(
 ) -> UserResponse:
     """Get the currently authenticated user's profile."""
     return UserResponse.model_validate(current_user)
+
+
+# ── Wave 0 Skeleton: F7 auth flows (return 501 until F7 implements) ──
+
+
+@router.post("/forgot-password", status_code=501)
+async def forgot_password() -> None:
+    """Request a password reset email. Pending F7."""
+    from app.core.exceptions import NotImplementedFeatureError
+    raise NotImplementedFeatureError("Password reset: pending F7")
+
+
+@router.post("/reset-password", status_code=501)
+async def reset_password() -> None:
+    """Reset password using a token from the email. Pending F7."""
+    from app.core.exceptions import NotImplementedFeatureError
+    raise NotImplementedFeatureError("Password reset: pending F7")
+
+
+@router.post("/verify-email", status_code=501)
+async def verify_email() -> None:
+    """Verify an email using a token. Pending F7."""
+    from app.core.exceptions import NotImplementedFeatureError
+    raise NotImplementedFeatureError("Email verification: pending F7")
+
+
+@router.get("/github", status_code=501)
+async def github_oauth_start() -> None:
+    """Redirect to GitHub OAuth. Pending F7."""
+    from app.core.exceptions import NotImplementedFeatureError
+    raise NotImplementedFeatureError("GitHub OAuth: pending F7")
+
+
+@router.get("/github/callback", status_code=501)
+async def github_oauth_callback() -> None:
+    """Handle GitHub OAuth callback. Pending F7."""
+    from app.core.exceptions import NotImplementedFeatureError
+    raise NotImplementedFeatureError("GitHub OAuth: pending F7")
