@@ -1,0 +1,71 @@
+# ── Version control ─────────────────────────────────────────────────
+.git/
+.gitignore
+.gitattributes
+
+# ── Dependencies ────────────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# ── Python cache ────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+htmlcov/
+.coverage
+
+# ── JS/TS build ─────────────────────────────────────────────────────
+.next/
+.turbo/
+dist/
+build/
+
+# ── Environment ──────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.db
+*.sqlite
+*.sqlite3
+
+# ── IDE ──────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+.cursor/
+.claude/
+
+# ── Logs ─────────────────────────────────────────────────────────────
+logs/
+*.log
+
+# ── Deployment ───────────────────────────────────────────────────────
+.vercel/
+.render/
+
+# ── Secrets ──────────────────────────────────────────────────────────
+*.pem
+*.key
+secrets/
+
+# ── Planning docs (local only) ──────────────────────────────────────
+/architecture/
+/.planning/
+/planning/
+
+# ── Planning docs ────────────────────────────────────────────────────
+.omo/
+.planning/
+
+# ── Tests / coverage artifacts ──────────────────────────────────────
+test.db
+coverage/
