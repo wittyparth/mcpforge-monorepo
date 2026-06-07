@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Response
+from fastapi import APIRouter, Cookie, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
 from app.core.config import settings
+from app.core.middleware.csrf import issue_csrf_token, set_csrf_cookie
 from app.schemas.auth import AuthResponse, LoginRequest, RegisterRequest
 from app.schemas.user import UserResponse
 from app.services.auth_service import AuthService
@@ -21,8 +22,8 @@ def _set_auth_cookies(
 ) -> None:
     """Set httpOnly cookies for access and refresh tokens.
 
-    Uses SameSite=None in production (cross-origin: Vercel frontend → Render backend)
-    and SameSite=Lax in development (same-origin: localhost:3000 → localhost:8000).
+    Uses SameSite=None in production (cross-origin: Vercel frontend -> Render
+    backend) and SameSite=Lax in development (same-origin: localhost).
     """
     samesite: str = "none" if settings.is_production else "lax"
     response.set_cookie(
@@ -38,7 +39,7 @@ def _set_auth_cookies(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=settings.is_production,  # required when SameSite=None
+        secure=settings.is_production,
         samesite=samesite,
         max_age=settings.JWT_REFRESH_TTL_DAYS * 86400,
         path="/api/v1/auth",
@@ -57,7 +58,12 @@ async def register(
     response: Response,
     session: AsyncSession = Depends(get_db),
 ) -> AuthResponse:
-    """Register a new user account."""
+    """Register a new user account.
+
+    Raises:
+        409: Email already registered.
+        422: Password appears in HIBP.
+    """
     svc = AuthService(session)
     result = await svc.register(
         email=body.email,
@@ -65,6 +71,7 @@ async def register(
         display_name=body.display_name,
     )
     _set_auth_cookies(response, result["access_token"], result["refresh_token"])
+    set_csrf_cookie(response, issue_csrf_token())
 
     user = result["user"]
     return AuthResponse(
@@ -80,10 +87,16 @@ async def login(
     response: Response,
     session: AsyncSession = Depends(get_db),
 ) -> AuthResponse:
-    """Authenticate and log in."""
+    """Authenticate and log in.
+
+    Raises:
+        401: Invalid credentials.
+        423: Account locked (too many failed attempts).
+    """
     svc = AuthService(session)
     result = await svc.login(email=body.email, password=body.password)
     _set_auth_cookies(response, result["access_token"], result["refresh_token"])
+    set_csrf_cookie(response, issue_csrf_token())
 
     user = result["user"]
     return AuthResponse(
@@ -99,13 +112,20 @@ async def refresh_token(
     session: AsyncSession = Depends(get_db),
     refresh_token: str | None = Cookie(default=None),
 ) -> AuthResponse:
-    """Refresh the access token using a refresh token from cookie."""
+    """Refresh the access token using a refresh token from cookie.
+
+    Exempt from CSRF (the cookie carries the credential; the body is empty).
+    Implements refresh token rotation with replay detection: reusing an
+    already-used jti revokes the user's entire token family.
+    """
     if not refresh_token:
-        raise HTTPException(status_code=401, detail="No refresh token provided")
+        from app.core.exceptions import UnauthorizedError
+        raise UnauthorizedError("No refresh token provided")
 
     svc = AuthService(session)
     result = await svc.refresh(refresh_token)
     _set_auth_cookies(response, result["access_token"], result["refresh_token"])
+    set_csrf_cookie(response, issue_csrf_token())
 
     user = result["user"]
     return AuthResponse(
@@ -116,9 +136,19 @@ async def refresh_token(
 
 
 @router.post("/logout")
-async def logout(response: Response) -> dict[str, str]:
-    """Log out by clearing auth cookies."""
+async def logout(
+    response: Response,
+    current_user: object = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
+) -> dict[str, str]:
+    """Log out: revoke all refresh tokens + clear auth cookies.
+
+    Requires authentication so we can identify which user to revoke.
+    """
+    svc = AuthService(session)
+    await svc.logout(getattr(current_user, "id", None))
     _clear_auth_cookies(response)
+    response.delete_cookie("csrf_token", path="/")
     return {"message": "Logged out successfully"}
 
 

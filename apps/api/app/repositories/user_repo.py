@@ -57,6 +57,12 @@ class UserRepository:
         await self.session.flush()
         return user
 
+    async def update_hash(self, user: User, new_hash: str) -> User:
+        """Update a user's password hash (for rehash-on-login)."""
+        user.password_hash = new_hash
+        await self.session.flush()
+        return user
+
     async def delete(self, user: User) -> None:
         """Delete a user."""
         await self.session.delete(user)

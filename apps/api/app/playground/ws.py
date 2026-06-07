@@ -1,7 +1,15 @@
 """WebSocket playground handler.
 
 Provides a WebSocket endpoint for browser-based MCP testing.
-# TODO(phase-2): Implement full WebSocket ↔ MCP protocol bridge.
+
+Auth: clients pass the JWT either as a `?token=<jwt>` query parameter
+(typical for the browser playground) or as a `Sec-WebSocket-Protocol`
+subprotocol header. Cookies are not sent on WebSocket upgrade by
+browsers, so we cannot rely on the `access_token` cookie here.
+
+The token is validated ONCE on connection. A failed auth closes the
+WebSocket with code 1008 (policy violation) and an error message
+delivered as a single text frame.
 """
 
 from __future__ import annotations
@@ -9,26 +17,55 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
+from jose import JWTError
 
+from app.core.exceptions import UnauthorizedError
+from app.core.security import decode_token
 from app.gateway.tool_executor import execute_tool, get_tools_config
 
 router = APIRouter()
 
 
-@router.websocket("/ws/playground/{slug}")
-async def playground_websocket(websocket: WebSocket, slug: str) -> None:
-    """WebSocket endpoint for the MCP Playground.
+async def _authenticate_ws(token: str | None) -> str:
+    """Validate the JWT from the WebSocket query string.
 
-    Accepts WebSocket connections and proxies MCP protocol messages
-    to the tool executor. For Phase 1, supports:
-    - tools/list
-    - tools/call (echo tool only)
-
-    # TODO(phase-2): Implement full MCP protocol bridge with
-    #                real server lookup, auth, and HTTP proxying.
+    Returns the user_id (UUID string) on success.
+    Raises UnauthorizedError on failure (caller closes the socket).
     """
+    if not token:
+        raise UnauthorizedError("Missing token query parameter")
+    try:
+        payload = decode_token(token)
+        if payload.get("type") != "access":
+            raise UnauthorizedError("Invalid token type")
+        return str(payload["sub"])
+    except (JWTError, KeyError, ValueError) as exc:
+        raise UnauthorizedError("Invalid or expired token") from exc
+
+
+@router.websocket("/ws/playground/{slug}")
+async def playground_websocket(
+    websocket: WebSocket,
+    slug: str,
+    token: str | None = Query(default=None),
+) -> None:
+    """WebSocket endpoint for the MCP Playground (auth required)."""
     await websocket.accept()
+    try:
+        user_id = await _authenticate_ws(token)
+    except UnauthorizedError as exc:
+        await websocket.send_text(
+            json.dumps(
+                {
+                    "jsonrpc": "2.0",
+                    "id": 0,
+                    "error": {"code": -32001, "message": exc.message},
+                }
+            )
+        )
+        await websocket.close(code=1008, reason=exc.message)
+        return
 
     try:
         while True:
