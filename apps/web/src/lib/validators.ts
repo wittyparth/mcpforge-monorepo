@@ -61,3 +61,78 @@ export const createServerSchema = z.object({
 export type LoginFormData = z.infer<typeof loginSchema>;
 export type RegisterFormData = z.infer<typeof registerSchema>;
 export type CreateServerFormData = z.infer<typeof createServerSchema>;
+
+// ── F1: OpenAPI Spec Ingestion Schemas ───────────────────────────
+
+export const specFetchSchema = z.object({
+  url: z
+    .string()
+    .url("Must be a valid URL")
+    .refine((u) => u.startsWith("https://"), "Only HTTPS URLs are allowed"),
+  headers: z.record(z.string()).optional(),
+});
+
+export type SpecFetchInput = z.infer<typeof specFetchSchema>;
+
+export const specUploadSchema = z.object({
+  file: z.instanceof(File, { message: "File is required" }),
+  type: z.enum(["json", "yaml"]),
+});
+
+export type SpecUploadInput = z.infer<typeof specUploadSchema>;
+
+// ── Tool Selection Schema ─────────────────────────────────────────
+
+export const toolSelectionSchema = z.object({
+  slug: z
+    .string()
+    .min(3, "Slug must be at least 3 characters")
+    .max(50, "Slug must be at most 50 characters")
+    .regex(
+      /^[a-z0-9]+(-[a-z0-9]+)*$/,
+      "Slug must be lowercase alphanumeric with hyphens",
+    ),
+  name: z
+    .string()
+    .min(1, "Name is required")
+    .max(200, "Name must be at most 200 characters"),
+  base_url: z
+    .string()
+    .url("Must be a valid URL")
+    .refine((u) => u.startsWith("https://"), "Only HTTPS base URLs are allowed"),
+  description: z.string().max(2000).optional(),
+  auth_scheme: z.enum(["none", "api_key", "bearer", "basic", "oauth2"]),
+  auth_header_name: z.string().max(100).optional(),
+  /** At least one tool must be selected */
+  selected_tool_names: z
+    .array(z.string())
+    .nonempty("At least one tool must be selected"),
+  transport_mode: z.enum(["sse", "streamable_http", "both"]),
+});
+
+export type ToolSelectionInput = z.infer<typeof toolSelectionSchema>;
+
+// ── Credential Schemas ────────────────────────────────────────────
+
+export const credentialCreateSchema = z.object({
+  env_var_name: z
+    .string()
+    .regex(
+      /^[A-Z][A-Z0-9_]*$/,
+      "Must be uppercase letters, digits, underscores; start with a letter",
+    ),
+  value: z.string().min(1, "Value is required"),
+  auth_scheme: z.enum(["bearer", "api_key", "basic", "oauth2", "header"]),
+  auth_header_name: z.string().max(100).optional(),
+});
+
+export type CredentialCreateInput = z.infer<typeof credentialCreateSchema>;
+
+// ── Build Schema ──────────────────────────────────────────────────
+
+export const buildStartSchema = z.object({
+  spec_source_id: z.string().uuid("Must be a valid UUID"),
+  transport_mode: z.enum(["sse", "streamable_http", "both"]),
+});
+
+export type BuildStartInput = z.infer<typeof buildStartSchema>;

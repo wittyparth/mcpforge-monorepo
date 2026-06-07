@@ -71,3 +71,220 @@ export interface CreateServerRequest {
   description?: string;
   spec_url?: string;
 }
+
+// ── F1: OpenAPI Spec Ingestion Types ──────────────────────────────
+
+/** HTTP methods supported by OpenAPI operations */
+export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
+
+/** Authentication schemes for MCP servers */
+export type AuthScheme = "none" | "api_key" | "bearer" | "basic" | "oauth2";
+
+/** Authentication schemes for stored credentials (excludes "none") */
+export type CredentialAuthScheme = "bearer" | "api_key" | "basic" | "oauth2" | "header";
+
+/** MCP transport modes */
+export type TransportMode = "sse" | "streamable_http" | "both";
+
+/** Build pipeline stages emitted as SSE events */
+export type BuildStage = "parsing" | "generating" | "testing" | "deploying" | "complete" | "error";
+
+// ── Spec Types ────────────────────────────────────────────────────
+
+/** Request body for POST /api/v1/specs/fetch */
+export interface SpecFetchRequest {
+  url: string;
+  headers?: Record<string, string> | null;
+}
+
+/** Response from GET /api/v1/specs/{id} — spec metadata */
+export interface SpecSource {
+  id: string;
+  user_id: string;
+  source_type: string;
+  source_url: string | null;
+  r2_key: string | null;
+  title: string | null;
+  version: string | null;
+  openapi_version: string | null;
+  endpoint_count: number | null;
+  spec_size_bytes: number | null;
+  fetch_status: string;
+  fetch_error: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+/** Response from a successful spec fetch or upload */
+export interface SpecUploadResponse {
+  spec_id: string;
+  title: string | null;
+  version: string | null;
+  openapi_version: string | null;
+  endpoint_count: number;
+  spec_size_bytes: number;
+  tools: ToolDefinition[];
+}
+
+/** A single validation error detail for a spec field */
+export interface SpecValidationError {
+  path: string;
+  message: string;
+  line?: number | null;
+  column?: number | null;
+}
+
+/** Structured error response for spec fetch/validation failures */
+export interface SpecFetchErrorResponse {
+  error_code: string;
+  message: string;
+  details: SpecValidationError[];
+  suggestion?: string | null;
+}
+
+/** Response from GET /api/v1/specs/{spec_id}/tools */
+export interface SpecToolListResponse {
+  spec_id: string;
+  tools: ToolDefinition[];
+}
+
+// ── Tool Types ────────────────────────────────────────────────────
+
+/** A single parameter extracted from an OpenAPI operation */
+export interface ToolParameter {
+  name: string;
+  /** OpenAPI parameter location ("in" field, reserved-word-quoted) */
+  "in": "path" | "query" | "header" | "cookie";
+  required: boolean;
+  description: string;
+  /** JSON Schema for the parameter value (aliased from "schema" on the wire) */
+  schema: Record<string, unknown>;
+  example?: unknown;
+}
+
+/** A single MCP tool extracted from an OpenAPI operation */
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  /** JSON Schema for the tool's input arguments */
+  input_schema: Record<string, unknown>;
+  /** Override the server base URL for this tool only */
+  base_url_override: string | null;
+  /** Original OpenAPI operationId, if any */
+  operation_id: string | null;
+  method: HttpMethod;
+  path: string;
+  original_operation_id: string | null;
+  summary: string | null;
+  tags: string[];
+  parameters: ToolParameter[];
+  /** JSON Schema for the request body */
+  request_body_schema: Record<string, unknown> | null;
+  /** Response schemas keyed by HTTP status code */
+  response_schemas: Record<string, Record<string, unknown>>;
+  security_requirements: Record<string, unknown>[];
+  selected: boolean;
+  warnings: string[];
+}
+
+/** Request body for POST /api/v1/specs/{id}/select-tools */
+export interface ToolSelectionRequest {
+  slug: string;
+  name: string;
+  base_url: string;
+  description?: string | null;
+  auth_scheme: string;
+  auth_header_name?: string | null;
+  /** Names of tools the user selected to include */
+  selected_tool_names: string[];
+  customizations?: Record<string, Record<string, unknown>> | null;
+  transport_mode: string;
+}
+
+/** Response from GET /api/v1/servers/{id}/tools */
+export interface ToolListResponse {
+  server_id: string;
+  tool_count: number;
+  tools: Record<string, unknown>[];
+}
+
+/** Request body for PATCH /api/v1/servers/{id}/tools/{tool_name} */
+export interface ToolUpdateRequest {
+  description?: string | null;
+  enabled?: boolean | null;
+  name?: string | null;
+}
+
+// ── Credential Types ──────────────────────────────────────────────
+
+/** Request body for POST /api/v1/servers/{id}/credentials */
+export interface CredentialCreateRequest {
+  /** Uppercase environment variable name (e.g., "API_KEY") */
+  env_var_name: string;
+  /** Plaintext credential value (server encrypts immediately) */
+  value: string;
+  auth_scheme: CredentialAuthScheme;
+  /** Custom header name for api_key scheme (default: X-API-Key) */
+  auth_header_name?: string | null;
+}
+
+/** Request body for POST /api/v1/servers/{id}/credentials/test */
+export interface CredentialTestRequest {
+  /** Which env var to test */
+  env_var_name: string;
+  /** The value to test (NOT stored) */
+  test_value: string;
+}
+
+/** Response for a credential dry-run test */
+export interface CredentialTestResponse {
+  success: boolean;
+  status_code: number | null;
+  /** Response latency in milliseconds */
+  latency_ms: number | null;
+  /** Sanitized error message — no credentials leaked */
+  error: string | null;
+}
+
+/** A stored credential. The value is NEVER included in responses. */
+export interface CredentialInfo {
+  id: string;
+  env_var_name: string;
+  auth_scheme: string;
+  auth_header_name: string | null;
+  encryption_key_id: string | null;
+  rotated_at: string | null;
+  last_used_at: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+/** Response wrapper for listing all credentials on a server */
+export interface CredentialListResponse {
+  server_id: string;
+  credentials: CredentialInfo[];
+  total: number;
+}
+
+// ── Build Types ───────────────────────────────────────────────────
+
+/** Request body for initiating a server build */
+export interface BuildStartRequest {
+  spec_source_id?: string;
+  transport_mode?: TransportMode;
+}
+
+/**
+ * An SSE event emitted during the server build pipeline.
+ *
+ * The backend emits these over `GET /api/v1/servers/{id}/build-status`
+ * using Server-Sent Events with `data: {"stage":"...","progress":N,"message":"..."}`.
+ */
+export interface BuildStatusEvent {
+  /** Current pipeline stage */
+  stage: BuildStage;
+  /** Progress percentage (0–100) */
+  progress: number;
+  /** Human-readable status message */
+  message: string;
+}

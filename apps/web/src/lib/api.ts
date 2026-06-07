@@ -8,6 +8,21 @@ import type {
   PaginatedResponse,
   ApiError,
 } from "@/types";
+import type {
+  SpecFetchRequest,
+  SpecUploadResponse,
+  SpecSource,
+  SpecToolListResponse,
+  ToolSelectionRequest,
+  ToolListResponse,
+  ToolUpdateRequest,
+  CredentialCreateRequest,
+  CredentialInfo,
+  CredentialListResponse,
+  CredentialTestRequest,
+  CredentialTestResponse,
+  BuildStatusEvent,
+} from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -85,6 +100,59 @@ async function request<T>(
 }
 
 // API client with typed methods matching the backend endpoints
+async function* buildStatusStream(id: string): AsyncIterable<BuildStatusEvent> {
+  const url = `${API_URL}/api/v1/servers/${id}/build-status`;
+  const response = await fetch(url, { credentials: "include" });
+
+  if (!response.ok) {
+    let errorBody: ApiError | null = null;
+    try {
+      errorBody = (await response.json()) as ApiError;
+    } catch {
+      // Response body is not JSON
+    }
+    throw new ApiClientError(
+      errorBody?.detail ?? `SSE connection failed with status ${response.status}`,
+      response.status,
+      errorBody?.code,
+      errorBody?.field,
+    );
+  }
+
+  if (!response.body) {
+    throw new ApiClientError("SSE response has no body", 0);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() || "";
+
+      for (const line of lines) {
+        if (line.startsWith("data: ")) {
+          const data = line.slice(6);
+          try {
+            const event = JSON.parse(data) as BuildStatusEvent;
+            yield event;
+          } catch {
+            // No-op: skip malformed SSE data
+          }
+        }
+      }
+    }
+  } finally {
+    reader.releaseLock();
+  }
+}
+
 export const api = {
   auth: {
     register: (data: RegisterRequest) =>
@@ -116,5 +184,75 @@ export const api = {
       request<McpServer>("PATCH", `/api/v1/servers/${id}`, data),
 
     delete: (id: string) => request<void>("DELETE", `/api/v1/servers/${id}`),
+
+    tools: {
+      list: (id: string) =>
+        request<ToolListResponse>("GET", `/api/v1/servers/${id}/tools`),
+      update: (id: string, toolName: string, updates: ToolUpdateRequest) =>
+        request<Record<string, unknown>>(
+          "PATCH",
+          `/api/v1/servers/${id}/tools/${toolName}`,
+          updates,
+        ),
+      enhance: (id: string) =>
+        request<void>("POST", `/api/v1/servers/${id}/tools/enhance`),
+    },
+
+    credentials: {
+      create: (id: string, input: CredentialCreateRequest) =>
+        request<CredentialInfo>(
+          "POST",
+          `/api/v1/servers/${id}/credentials`,
+          input,
+        ),
+      list: (id: string) =>
+        request<CredentialListResponse>(
+          "GET",
+          `/api/v1/servers/${id}/credentials`,
+        ),
+      test: (id: string, input: CredentialTestRequest) =>
+        request<CredentialTestResponse>(
+          "POST",
+          `/api/v1/servers/${id}/credentials/test`,
+          input,
+        ),
+      delete: (id: string, envVarName: string) =>
+        request<void>(
+          "DELETE",
+          `/api/v1/servers/${id}/credentials/${envVarName}`,
+        ),
+    },
+
+    build: {
+      start: (id: string) =>
+        request<McpServer>("POST", `/api/v1/servers/${id}/build`),
+      getStatus: (id: string) => buildStatusStream(id),
+    },
+  },
+
+  specs: {
+    fetch: (input: SpecFetchRequest) =>
+      request<SpecUploadResponse>("POST", "/api/v1/specs/fetch", input),
+    upload: (file: File) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      return request<SpecUploadResponse>(
+        "POST",
+        "/api/v1/specs/upload",
+        formData,
+      );
+    },
+    getById: (specId: string) =>
+      request<SpecSource>("GET", `/api/v1/specs/${specId}`),
+    getTools: (specId: string) =>
+      request<SpecToolListResponse>("GET", `/api/v1/specs/${specId}/tools`),
+    delete: (specId: string) =>
+      request<void>("DELETE", `/api/v1/specs/${specId}`),
+    selectTools: (specId: string, selection: ToolSelectionRequest) =>
+      request<McpServer>(
+        "POST",
+        `/api/v1/specs/${specId}/select-tools`,
+        selection,
+      ),
   },
 };
