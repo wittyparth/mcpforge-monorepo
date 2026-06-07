@@ -1,0 +1,11 @@
+{
+  "name": "@mcpforge/eslint-config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.js",
+  "files": [
+    "index.js",
+    "react.js"
+  ]
+}

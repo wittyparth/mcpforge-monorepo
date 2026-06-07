@@ -1,0 +1,838 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "MCPForge API",
+    "description": "Convert OpenAPI specs into AI-optimized MCP servers",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Register",
+        "description": "Register a new user account.",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Login",
+        "description": "Authenticate and log in.",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" } }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Refresh Token",
+        "description": "Refresh the access token using a refresh token from cookie.",
+        "operationId": "refresh_token_api_v1_auth_refresh_post",
+        "parameters": [
+          {
+            "name": "refresh_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Refresh Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": ["auth"],
+        "summary": "Logout",
+        "description": "Log out by clearing auth cookies.",
+        "operationId": "logout_api_v1_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": { "type": "string" },
+                  "type": "object",
+                  "title": "Response Logout Api V1 Auth Logout Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": ["auth"],
+        "summary": "Get Me",
+        "description": "Get the currently authenticated user's profile.",
+        "operationId": "get_me_api_v1_auth_me_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/UserResponse" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/servers/health": {
+      "get": {
+        "tags": ["servers"],
+        "summary": "Api Health",
+        "description": "Health check endpoint for the API service.",
+        "operationId": "api_health_api_v1_servers_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/APIHealthResponse" } }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/servers": {
+      "get": {
+        "tags": ["servers"],
+        "summary": "List Servers",
+        "description": "List all MCP servers for the current user.",
+        "operationId": "list_servers_api_v1_servers_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "minimum": 0, "default": 0, "title": "Skip" }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/MCPServerResponse" },
+                  "title": "Response List Servers Api V1 Servers Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["servers"],
+        "summary": "Create Server",
+        "description": "Create a new MCP server.",
+        "operationId": "create_server_api_v1_servers_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/MCPServerCreate" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/MCPServerResponse" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/servers/{server_id}": {
+      "get": {
+        "tags": ["servers"],
+        "summary": "Get Server",
+        "description": "Get a specific MCP server by ID.",
+        "operationId": "get_server_api_v1_servers__server_id__get",
+        "parameters": [
+          {
+            "name": "server_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Server Id" }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/MCPServerResponse" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["servers"],
+        "summary": "Update Server",
+        "description": "Update an MCP server.",
+        "operationId": "update_server_api_v1_servers__server_id__patch",
+        "parameters": [
+          {
+            "name": "server_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Server Id" }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/MCPServerUpdate" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/MCPServerResponse" } }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["servers"],
+        "summary": "Delete Server",
+        "description": "Delete an MCP server.",
+        "operationId": "delete_server_api_v1_servers__server_id__delete",
+        "parameters": [
+          {
+            "name": "server_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Server Id" }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Authorization"
+            }
+          },
+          {
+            "name": "access_token",
+            "in": "cookie",
+            "required": false,
+            "schema": {
+              "anyOf": [{ "type": "string" }, { "type": "null" }],
+              "title": "Access Token"
+            }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mcp/v1/{slug}/health": {
+      "get": {
+        "summary": "Mcp Server Health",
+        "description": "Health check for a specific MCP server.",
+        "operationId": "mcp_server_health_mcp_v1__slug__health_get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Slug" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" },
+                  "title": "Response Mcp Server Health Mcp V1  Slug  Health Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mcp/v1/{slug}/sse": {
+      "get": {
+        "summary": "Mcp Sse Endpoint",
+        "description": "SSE transport endpoint for MCP protocol.\n\nEstablishes an SSE connection and handles the MCP protocol lifecycle.",
+        "operationId": "mcp_sse_endpoint_mcp_v1__slug__sse_get",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Slug" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mcp/v1/{slug}/message": {
+      "post": {
+        "summary": "Mcp Message Endpoint",
+        "description": "Message endpoint for SSE transport.\n\nReceives JSON-RPC messages sent via POST during an SSE session.",
+        "operationId": "mcp_message_endpoint_mcp_v1__slug__message_post",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Slug" }
+          },
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": false,
+            "schema": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Session Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mcp/v1/{slug}/": {
+      "post": {
+        "summary": "Mcp Http Endpoint",
+        "description": "StreamableHTTP transport endpoint for MCP protocol.\n\nFor Phase 1, returns a single JSON-RPC response.\n# TODO(phase-2): Implement streaming response for StreamableHTTP.",
+        "operationId": "mcp_http_endpoint_mcp_v1__slug___post",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Slug" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Root health check endpoint.\n\nChecks database and Redis connectivity (best-effort).\nReturns ok even if dependencies are down — just marks them.",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/HealthResponse" } }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "APIHealthResponse": {
+        "properties": {
+          "status": { "type": "string", "title": "Status", "default": "ok" },
+          "version": { "type": "string", "title": "Version", "default": "0.1.0" },
+          "environment": { "type": "string", "title": "Environment", "default": "development" }
+        },
+        "type": "object",
+        "title": "APIHealthResponse",
+        "description": "Response from the API v1 health check."
+      },
+      "AuthResponse": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "email": { "type": "string", "title": "Email" },
+          "display_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Display Name"
+          }
+        },
+        "type": "object",
+        "required": ["id", "email"],
+        "title": "AuthResponse",
+        "description": "Response body after successful authentication."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": { "type": "string", "title": "Status", "default": "ok" },
+          "version": { "type": "string", "title": "Version", "default": "0.1.0" },
+          "db": { "type": "string", "title": "Db", "default": "ok" },
+          "redis": { "type": "string", "title": "Redis", "default": "ok" }
+        },
+        "type": "object",
+        "title": "HealthResponse",
+        "description": "Response from the root health check endpoint."
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": { "type": "string", "format": "email", "title": "Email" },
+          "password": { "type": "string", "title": "Password" }
+        },
+        "type": "object",
+        "required": ["email", "password"],
+        "title": "LoginRequest",
+        "description": "Request body for user login."
+      },
+      "MCPServerCreate": {
+        "properties": {
+          "name": { "type": "string", "maxLength": 200, "minLength": 1, "title": "Name" },
+          "slug": {
+            "type": "string",
+            "maxLength": 50,
+            "minLength": 3,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "title": "Slug",
+            "description": "Lowercase alphanumeric with hyphens, 3-50 chars"
+          },
+          "description": {
+            "anyOf": [{ "type": "string", "maxLength": 2000 }, { "type": "null" }],
+            "title": "Description"
+          },
+          "base_url": { "type": "string", "maxLength": 500, "title": "Base Url" },
+          "spec_url": {
+            "anyOf": [{ "type": "string", "maxLength": 1000 }, { "type": "null" }],
+            "title": "Spec Url"
+          },
+          "auth_scheme": {
+            "type": "string",
+            "pattern": "^(none|api_key|bearer|basic|oauth2)$",
+            "title": "Auth Scheme",
+            "default": "none"
+          },
+          "auth_header_name": {
+            "anyOf": [{ "type": "string", "maxLength": 100 }, { "type": "null" }],
+            "title": "Auth Header Name"
+          },
+          "tools_config": { "type": "object", "title": "Tools Config" },
+          "transport_mode": {
+            "type": "string",
+            "pattern": "^(sse|streamable_http|both)$",
+            "title": "Transport Mode",
+            "default": "sse"
+          }
+        },
+        "type": "object",
+        "required": ["name", "slug", "base_url"],
+        "title": "MCPServerCreate",
+        "description": "Request body for creating a new MCP server."
+      },
+      "MCPServerResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "user_id": { "type": "string", "format": "uuid", "title": "User Id" },
+          "slug": { "type": "string", "title": "Slug" },
+          "name": { "type": "string", "title": "Name" },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description"
+          },
+          "status": { "type": "string", "title": "Status", "default": "building" },
+          "spec_url": { "anyOf": [{ "type": "string" }, { "type": "null" }], "title": "Spec Url" },
+          "base_url": { "type": "string", "title": "Base Url" },
+          "auth_scheme": { "type": "string", "title": "Auth Scheme", "default": "none" },
+          "transport_mode": { "type": "string", "title": "Transport Mode", "default": "sse" },
+          "tools_config": { "type": "object", "title": "Tools Config" },
+          "total_calls": { "type": "integer", "title": "Total Calls", "default": 0 },
+          "monthly_calls": { "type": "integer", "title": "Monthly Calls", "default": 0 },
+          "last_call_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Last Call At"
+          },
+          "version": { "type": "integer", "title": "Version", "default": 1 },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "updated_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "user_id", "slug", "name", "base_url", "tools_config", "created_at"],
+        "title": "MCPServerResponse",
+        "description": "Public MCP server response."
+      },
+      "MCPServerUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [{ "type": "string", "maxLength": 200, "minLength": 1 }, { "type": "null" }],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [{ "type": "string", "maxLength": 2000 }, { "type": "null" }],
+            "title": "Description"
+          },
+          "base_url": {
+            "anyOf": [{ "type": "string", "maxLength": 500 }, { "type": "null" }],
+            "title": "Base Url"
+          },
+          "auth_scheme": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(none|api_key|bearer|basic|oauth2)$" },
+              { "type": "null" }
+            ],
+            "title": "Auth Scheme"
+          },
+          "auth_header_name": {
+            "anyOf": [{ "type": "string", "maxLength": 100 }, { "type": "null" }],
+            "title": "Auth Header Name"
+          },
+          "tools_config": {
+            "anyOf": [{ "type": "object" }, { "type": "null" }],
+            "title": "Tools Config"
+          },
+          "transport_mode": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(sse|streamable_http|both)$" },
+              { "type": "null" }
+            ],
+            "title": "Transport Mode"
+          },
+          "status": {
+            "anyOf": [
+              { "type": "string", "pattern": "^(building|active|paused|error)$" },
+              { "type": "null" }
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "title": "MCPServerUpdate",
+        "description": "Request body for updating an MCP server."
+      },
+      "RegisterRequest": {
+        "properties": {
+          "email": { "type": "string", "format": "email", "title": "Email" },
+          "password": { "type": "string", "maxLength": 128, "minLength": 12, "title": "Password" },
+          "display_name": {
+            "anyOf": [{ "type": "string", "maxLength": 100 }, { "type": "null" }],
+            "title": "Display Name"
+          }
+        },
+        "type": "object",
+        "required": ["email", "password"],
+        "title": "RegisterRequest",
+        "description": "Request body for user registration."
+      },
+      "UserResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "email": { "type": "string", "title": "Email" },
+          "display_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Display Name"
+          },
+          "avatar_url": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Avatar Url"
+          },
+          "plan": { "type": "string", "title": "Plan", "default": "free" },
+          "ai_enhancement_credits": {
+            "type": "integer",
+            "title": "Ai Enhancement Credits",
+            "default": 3
+          },
+          "email_verified": { "type": "boolean", "title": "Email Verified", "default": false },
+          "created_at": { "type": "string", "format": "date-time", "title": "Created At" },
+          "updated_at": {
+            "anyOf": [{ "type": "string", "format": "date-time" }, { "type": "null" }],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": ["id", "email", "created_at"],
+        "title": "UserResponse",
+        "description": "Public user profile response."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

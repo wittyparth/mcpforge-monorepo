@@ -1,0 +1,87 @@
+[project]
+name = "mcpforge-api"
+version = "0.1.0"
+description = "MCPForge API - Convert OpenAPI specs into AI-optimized MCP servers"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi ~= 0.115.0",
+    "uvicorn[standard] ~= 0.32.0",
+    "sqlalchemy ~= 2.0.36",
+    "asyncpg ~= 0.30.0",
+    "alembic ~= 1.14.0",
+    "pydantic ~= 2.10.0",
+    "pydantic-settings ~= 2.7.0",
+    "python-jose[cryptography] ~= 3.3.0",
+    "passlib[bcrypt] ~= 1.7.4",
+    "bcrypt ~= 4.0.1",
+    "python-multipart ~= 0.0.20",
+    "redis ~= 5.2.0",
+    "httpx ~= 0.28.0",
+    "structlog ~= 24.4.0",
+    "email-validator ~= 2.2.0",
+    "greenlet~=3.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest ~= 8.3.0",
+    "pytest-asyncio ~= 0.25.0",
+    "pytest-cov ~= 6.0.0",
+    "httpx ~= 0.28.0",
+    "ruff ~= 0.8.0",
+    "mypy ~= 1.13.0",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM", "ARG"]
+ignore = [
+    "B008",   # FastAPI Depends() in function args
+    "ARG001", # Unused function arg (FastAPI handlers need specific signatures)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_return_any = true
+warn_unreachable = true
+
+disallow_any_unimported = false
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+ignore_errors = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app/"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "httpx~=0.28.0",
+    "mypy~=1.13.0",
+    "pytest~=8.3.0",
+    "pytest-asyncio~=0.25.0",
+    "pytest-cov~=6.0.0",
+    "ruff~=0.8.0",
+]

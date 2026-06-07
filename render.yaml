@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: mcpforge-api
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: ./apps/api
+    rootDir: ./apps/api
+    autoDeploy: true
+    branch: main
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://mcpforge.vercel.app
+      - key: LOG_LEVEL
+        value: INFO
+    buildFilter:
+      paths:
+        - apps/api/**
+        - packages/python-config/**
+        - pyproject.toml

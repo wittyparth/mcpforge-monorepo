@@ -1,0 +1,19 @@
+{
+  "name": "@mcpforge/shared-types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TypeScript types generated from the MCPForge API OpenAPI schema",
+  "main": "./api-types.d.ts",
+  "types": "./api-types.d.ts",
+  "files": [
+    "api-types.d.ts",
+    "openapi.json"
+  ],
+  "scripts": {
+    "generate": "openapi-typescript ./openapi.json -o ./api-types.d.ts",
+    "fetch": "curl -s ${API_URL:-http://localhost:8000}/openapi.json -o ./openapi.json"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.13.0"
+  }
+}
