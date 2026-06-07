@@ -33,6 +33,11 @@ class User(Base, UUIDMixin, TimestampMixin):
     ai_enhancement_credits: Mapped[int] = mapped_column(Integer, default=3)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # Wave 0 additions
+    password_changed_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    last_login_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    stripe_customer_id: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
+
     # Relationships
     servers: Mapped[list[MCPServer]] = relationship(
         "MCPServer", back_populates="owner", cascade="all, delete-orphan"

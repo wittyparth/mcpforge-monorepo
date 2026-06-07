@@ -37,6 +37,10 @@ class Credential(Base, UUIDMixin, TimestampMixin):
     encryption_key_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     rotated_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    rotated_by: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+    last_used_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
     # Relationships
     server: Mapped[MCPServer] = relationship(

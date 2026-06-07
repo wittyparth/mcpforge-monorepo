@@ -71,8 +71,25 @@ class MCPServer(Base, UUIDMixin, TimestampMixin):
     # Version tracking
     version: Mapped[int] = mapped_column(Integer, default=1)
 
+    # AI enhancement (F2)
+    description_review_status: Mapped[str] = mapped_column(String(20), default="pending")
+    last_ai_run_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    ai_enhancement_cost_cents: Mapped[int] = mapped_column(Integer, default=0)
+    original_tools_config: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+
+    # Team ownership (F7)
+    team_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("teams.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    owner_user_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=True
+    )
+
     # Relationships
-    owner: Mapped[User] = relationship("User", back_populates="servers")
+    owner: Mapped[User] = relationship("User", back_populates="servers", foreign_keys=[user_id])
+    team: Mapped[object | None] = relationship("Team", back_populates="servers")
     credentials: Mapped[list[Credential]] = relationship(
         "Credential", back_populates="server", cascade="all, delete-orphan",
         foreign_keys="Credential.server_id",
