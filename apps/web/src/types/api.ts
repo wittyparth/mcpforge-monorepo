@@ -3,12 +3,12 @@
 export interface User {
   id: string;
   email: string;
-  display_name: string | null;
-  avatar_url: string | null;
-  plan: "free" | "pro" | "team";
-  email_verified: boolean;
+  display_name?: string | null;
+  avatar_url?: string | null;
+  plan?: string;
+  email_verified?: boolean;
   created_at: string;
-  updated_at: string;
+  updated_at?: string | null;
 }
 
 export interface McpServer {
@@ -17,14 +17,14 @@ export interface McpServer {
   slug: string;
   name: string;
   description?: string | null;
-  status: "building" | "active" | "paused" | "error";
+  status: string;
   spec_url?: string | null;
   base_url: string;
   auth_scheme: "none" | "api_key" | "bearer" | "basic" | "oauth2";
   tools_config: unknown;
   transport_mode: "sse" | "streamable_http" | "both";
-  total_calls: number;
-  monthly_calls: number;
+  total_calls?: number;
+  monthly_calls?: number;
   last_call_at?: string | null;
   version: number;
   created_at: string;
@@ -123,7 +123,7 @@ export interface SpecUploadResponse {
   openapi_version: string | null;
   endpoint_count: number;
   spec_size_bytes: number;
-  tools: ToolDefinition[];
+  tools?: ToolDefinition[];
 }
 
 /** A single validation error detail for a spec field */
@@ -219,51 +219,41 @@ export interface ToolUpdateRequest {
 
 /** Request body for POST /api/v1/servers/{id}/credentials */
 export interface CredentialCreateRequest {
-  /** Uppercase environment variable name (e.g., "API_KEY") */
   env_var_name: string;
-  /** Plaintext credential value (server encrypts immediately) */
   value: string;
-  auth_scheme: CredentialAuthScheme;
-  /** Custom header name for api_key scheme (default: X-API-Key) */
+  auth_scheme: string;
   auth_header_name?: string | null;
 }
 
-/** Request body for POST /api/v1/servers/{id}/credentials/test */
-export interface CredentialTestRequest {
-  /** Which env var to test */
-  env_var_name: string;
-  /** The value to test (NOT stored) */
-  test_value: string;
-}
-
-/** Response for a credential dry-run test */
-export interface CredentialTestResponse {
-  success: boolean;
-  status_code: number | null;
-  /** Response latency in milliseconds */
-  latency_ms: number | null;
-  /** Sanitized error message — no credentials leaked */
-  error: string | null;
-}
-
-/** A stored credential. The value is NEVER included in responses. */
+/** A stored credential (value NEVER returned by the API). */
 export interface CredentialInfo {
   id: string;
   env_var_name: string;
   auth_scheme: string;
-  auth_header_name: string | null;
-  encryption_key_id: string | null;
-  rotated_at: string | null;
-  last_used_at: string | null;
+  auth_header_name?: string | null;
+  encryption_key_id?: string | null;
+  rotated_at?: string | null;
+  last_used_at?: string | null;
   created_at: string;
-  updated_at: string | null;
+  updated_at?: string | null;
 }
 
-/** Response wrapper for listing all credentials on a server */
 export interface CredentialListResponse {
   server_id: string;
   credentials: CredentialInfo[];
   total: number;
+}
+
+export interface CredentialTestRequest {
+  env_var_name: string;
+  test_value: string;
+}
+
+export interface CredentialTestResponse {
+  success: boolean;
+  status_code?: number | null;
+  latency_ms?: number | null;
+  error?: string | null;
 }
 
 // ── Build Types ───────────────────────────────────────────────────

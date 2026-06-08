@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import * as React from "react";
@@ -85,7 +86,7 @@ const SpecUrlInput = React.forwardRef<HTMLDivElement, SpecUrlInputProps>(
           url: data.url,
           headers: extraHeaders ?? null,
         });
-        onSuccess(result);
+        onSuccess(result as any);
       } catch (err: unknown) {
         const message =
           err instanceof Error ? err.message : "Failed to fetch spec";

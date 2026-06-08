@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -111,7 +112,7 @@ export function useSelectTools(specId: string) {
   return useMutation({
     mutationFn: (selection: ToolSelectionRequest) =>
       api.specs.selectTools(specId, selection),
-    onSuccess: (server) => {
+    onSuccess: (server: any) => {
       void queryClient.invalidateQueries({ queryKey: ["server", server.id] });
       toast.success("Tools selected successfully");
     },

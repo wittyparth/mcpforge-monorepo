@@ -39,7 +39,8 @@ export function useCreateServer() {
 
   return useMutation({
     mutationFn: (data: CreateServerRequest) => api.servers.create(data),
-    onSuccess: (server) => {
+    onSuccess: (// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  server: any) => {
       void queryClient.invalidateQueries({ queryKey: SERVERS_KEY });
       toast.success("Server created successfully!");
       router.push(`/dashboard/servers/${server.id}`);

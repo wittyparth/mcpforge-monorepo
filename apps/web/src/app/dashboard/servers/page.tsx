@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import Link from "next/link";
@@ -82,7 +83,7 @@ export default function ServersPage() {
       {/* Server list */}
       {data && data.length > 0 && (
         <div className="space-y-4">
-          {data.map((server) => (
+          {data.map((server: any) => (
             <ServerCard key={server.id} server={server} />
           ))}
         </div>

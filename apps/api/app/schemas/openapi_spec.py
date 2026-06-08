@@ -24,7 +24,11 @@ class ToolParameter(BaseModel):
     in_: Literal["path", "query", "header", "cookie"] = Field(alias="in")
     required: bool
     description: str
-    schema_: dict[str, Any] = Field(alias="schema")
+    aliased_schema: dict[str, Any] = Field(
+        default_factory=dict,
+        serialization_alias="schema",
+        description="JSON Schema for the field value",
+    )
     example: Any | None = None
 
 

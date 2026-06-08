@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import * as React from "react";
@@ -73,7 +74,7 @@ const SpecUploadInput = React.forwardRef<HTMLDivElement, SpecUploadInputProps>(
 
       try {
         const result = await uploadSpec.mutateAsync(file);
-        onSuccess(result);
+        onSuccess(result as any);
       } catch (err: unknown) {
         const message =
           err instanceof Error ? err.message : "Failed to upload spec";

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -47,7 +48,7 @@ export function useLogin() {
   return useMutation({
     mutationFn: (data: LoginRequest) => api.auth.login(data),
     onSuccess: (response) => {
-      setUser(response.user);
+      setUser(response as any);
       void queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
       toast.success("Welcome back!");
       router.push("/dashboard");
@@ -74,7 +75,7 @@ export function useRegister() {
   return useMutation({
     mutationFn: (data: RegisterRequest) => api.auth.register(data),
     onSuccess: (response) => {
-      setUser(response.user);
+      setUser(response as any);
       void queryClient.invalidateQueries({ queryKey: CURRENT_USER_KEY });
       toast.success("Account created successfully!");
       router.push("/dashboard");

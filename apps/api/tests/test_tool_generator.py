@@ -22,7 +22,7 @@ class _ToolParam(BaseModel):
     in_: str = Field(default="query", alias="in")
     required: bool = False
     description: str = ""
-    schema_: dict[str, Any] = Field(default_factory=dict, alias="schema")
+    schema_alias: dict[str, Any] = Field(default_factory=dict, alias="schema")
     example: Any = None
 
 

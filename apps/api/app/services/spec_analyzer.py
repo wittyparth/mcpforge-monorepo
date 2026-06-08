@@ -153,7 +153,7 @@ class SpecAnalyzer:
                     in_=raw_in,
                     required=param.get("required", False),
                     description=param.get("description", ""),
-                    schema_=param.get("schema", {}),
+                    aliased_schema=param.get("schema", {}),
                     example=param.get("example") if "example" in param else None,
                 )
             except Exception:

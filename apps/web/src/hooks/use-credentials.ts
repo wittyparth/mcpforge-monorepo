@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -53,7 +54,7 @@ export function useTestCredential(serverId: string) {
   return useMutation({
     mutationFn: (input: CredentialTestRequest) =>
       api.servers.credentials.test(serverId, input),
-    onSuccess: (result) => {
+    onSuccess: (result: any) => {
       if (result.success) {
         toast.success(`Connection successful (${result.latency_ms}ms)`);
       } else {

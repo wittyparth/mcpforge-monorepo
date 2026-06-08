@@ -171,7 +171,7 @@ export default function NewServerWizardPage() {
 
   const handleSpecSuccess = React.useCallback((spec: SpecUploadResponse) => {
     setSpecResponse(spec);
-    setSelectedToolSet(new Set(spec.tools.filter((t) => t.selected).map((t) => t.name)));
+    setSelectedToolSet(new Set((spec.tools ?? []).filter((t) => t.selected).map((t) => t.name)));
     setStep(2);
   }, []);
 
@@ -365,7 +365,7 @@ export default function NewServerWizardPage() {
       {step === 2 && specResponse && (
         <section aria-label="Step 2: Select Tools">
           <ToolWorkspace
-            tools={specResponse.tools}
+            tools={specResponse.tools ?? []}
             selected={selectedToolSet}
             onToggle={handleToolToggle}
             onSelectAll={handleSelectAll}
@@ -401,7 +401,7 @@ export default function NewServerWizardPage() {
             onSubmit={handleServerConfigSubmit}
             isSubmitting={isCreatingServer}
             defaultValues={{
-              base_url: specResponse.tools[0]?.base_url_override ?? "",
+              base_url: specResponse.tools?.[0]?.base_url_override ?? "",
             }}
           />
 

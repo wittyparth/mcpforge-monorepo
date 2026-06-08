@@ -172,8 +172,8 @@ export default function ServerDetailPage({ params }: { params: Promise<{ id: str
                   { l: "Auth Scheme", v: server.auth_scheme },
                   { l: "Transport Mode", v: server.transport_mode },
                   { l: "Version", v: `v${server.version}` },
-                  { l: "Total Calls", v: server.total_calls.toLocaleString() },
-                  { l: "Monthly Calls", v: server.monthly_calls.toLocaleString() },
+                  { l: "Total Calls", v: server.total_calls?.toLocaleString() ?? "0" },
+                  { l: "Monthly Calls", v: server.monthly_calls?.toLocaleString() ?? "0" },
                   { l: "Last Called", v: fmtT(server.last_call_at) },
                   { l: "Created", v: fmtT(server.created_at) },
                 ].map(r => (
@@ -305,8 +305,8 @@ export default function ServerDetailPage({ params }: { params: Promise<{ id: str
         {/* ══ Analytics ══ */}
         <TabsContent value="analytics" className="space-y-6">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {[{ i: Activity, l: "Total Calls", v: server.total_calls.toLocaleString() },
-              { i: BarChart3, l: "Monthly Calls", v: server.monthly_calls.toLocaleString() },
+            {[{ i: Activity, l: "Total Calls", v: server.total_calls?.toLocaleString() ?? "0" },
+              { i: BarChart3, l: "Monthly Calls", v: server.monthly_calls?.toLocaleString() ?? "0" },
               { i: Globe, l: "Last Called", v: fmtT(server.last_call_at) },
               { i: Activity, l: "Version", v: `v${server.version}` },
             ].map(s => (

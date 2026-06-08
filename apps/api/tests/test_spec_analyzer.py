@@ -514,7 +514,7 @@ class TestRefResolution:
         assert param.name == "limit"
         assert param.in_ == "query"
         assert param.required is False
-        assert param.schema_.get("maximum") == 100
+        assert param.aliased_schema.get("maximum") == 100
 
     def test_ref_in_path_parameter_resolved(self) -> None:
         analyzer = SpecAnalyzer()
@@ -525,7 +525,7 @@ class TestRefResolution:
         assert param.name == "id"
         assert param.in_ == "path"
         assert param.required is True
-        assert param.schema_.get("type") == "string"
+        assert param.aliased_schema.get("type") == "string"
 
     def test_ref_in_response_schema_resolved(self) -> None:
         analyzer = SpecAnalyzer()

@@ -307,6 +307,11 @@ Free tier stack: Vercel (web) + Render (api) + Neon (Postgres) + Upstash (Redis)
 ## Anti-patterns to avoid
 
 - ❌ `as any`, `@ts-ignore`, `@ts-expect-error` — fix the type properly
+- ❌ Hand-writing frontend API clients — **ALWAYS** use the auto-generated SDK
+  from `@hey-api/openapi-ts`. Regenerate with `pnpm generate-client` or
+  `pnpm predev` (runs automatically before dev/build). The generated SDK
+  lives in `apps/web/src/client/` and is rebuilt from the live backend's
+  `/openapi.json`.
 - ❌ Sync DB calls in async FastAPI routes — use `AsyncSession`
 - ❌ Direct API calls to user APIs from frontend — must go through MCP gateway
 - ❌ Storing API credentials in plaintext — always encrypt (Fernet for now, KMS later)

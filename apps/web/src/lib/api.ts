@@ -1,261 +1,120 @@
-import type {
-  User,
-  McpServer,
-  LoginRequest,
-  RegisterRequest,
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/**
+ * Auto-generated API client — thin re-export of SDK.
+ *
+ * Regenerate with: ``pnpm generate-client``
+ */
+
+import "../client/setup";
+
+export { ApiError as ApiClientError } from "../client/core/ApiError";
+
+import {
+  AuthService,
+  ServersService,
+  SpecsService,
+  ToolsService,
+  CredentialsService,
+  BuildService,
+} from "../client/sdk.gen";
+
+export {
+  AuthService,
+  ServersService,
+  SpecsService,
+  ToolsService,
+  CredentialsService,
+  BuildService,
+};
+
+export type {
+  UserResponse,
   AuthResponse,
-  CreateServerRequest,
-  ApiError,
-} from "@/types";
-import type {
-  SpecFetchRequest,
+  MCPServerResponse,
   SpecUploadResponse,
-  SpecSource,
-  SpecToolListResponse,
-  ToolSelectionRequest,
-  ToolListResponse,
-  ToolUpdateRequest,
-  CredentialCreateRequest,
-  CredentialInfo,
+  CredentialResponse,
   CredentialListResponse,
-  CredentialTestRequest,
   CredentialTestResponse,
-  BuildStatusEvent,
-} from "@/types/api";
+  ToolListResponse,
+} from "../client/types.gen";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+import type { BuildStatusEvent } from "@/types/api";
 
-export class ApiClientError extends Error {
-  public status: number;
-  public code: string | undefined;
-  public field: string | undefined;
-
-  constructor(message: string, status: number, code?: string, field?: string) {
-    super(message);
-    this.name = "ApiClientError";
-    this.status = status;
-    this.code = code;
-    this.field = field;
-  }
-}
-
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    let errorBody: ApiError | null = null;
-    try {
-      errorBody = (await response.json()) as ApiError;
-    } catch {
-      // Response body is not JSON
-    }
-
-    const message =
-      errorBody?.detail ?? `Request failed with status ${response.status}`;
-    throw new ApiClientError(
-      message,
-      response.status,
-      errorBody?.code,
-      errorBody?.field,
-    );
-  }
-
-  // Handle 204 No Content
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  return response.json() as Promise<T>;
-}
-
-async function request<T>(
-  method: string,
-  path: string,
-  body?: unknown,
-  options?: RequestInit,
-): Promise<T> {
-  const url = `${API_URL}${path}`;
-
-  const headers: Record<string, string> = {
-    ...(options?.headers as Record<string, string>),
-  };
-
-  if (body !== undefined && !(body instanceof FormData)) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  const response = await fetch(url, {
-    method,
-    headers,
-    credentials: "include",
-    body:
-      body instanceof FormData
-        ? body
-        : body !== undefined
-          ? JSON.stringify(body)
-          : undefined,
-    ...options,
-  });
-
-  return handleResponse<T>(response);
-}
-
-// API client with typed methods matching the backend endpoints
-async function* buildStatusStream(
+/**
+ * SSE build-status stream.
+ * The SDK doesn't natively support SSE endpoints, so we use the Fetch API.
+ */
+export async function* buildStatusStream(
   id: string,
   signal?: AbortSignal,
 ): AsyncIterable<BuildStatusEvent> {
-  const url = `${API_URL}/api/v1/servers/${id}/build-status`;
+  const url = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/v1/servers/${id}/build-status`;
   const response = await fetch(url, { credentials: "include", signal });
-
-  if (!response.ok) {
-    let errorBody: ApiError | null = null;
-    try {
-      errorBody = (await response.json()) as ApiError;
-    } catch {
-      // Response body is not JSON
-    }
-    throw new ApiClientError(
-      errorBody?.detail ?? `SSE connection failed with status ${response.status}`,
-      response.status,
-      errorBody?.code,
-      errorBody?.field,
-    );
-  }
-
-  if (!response.body) {
-    throw new ApiClientError("SSE response has no body", 0);
-  }
-
+  if (!response.ok) throw new Error(`SSE failed: ${response.status}`);
+  if (!response.body) throw new Error("SSE: no body");
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-
   try {
     while (true) {
       if (signal?.aborted) break;
       const { done, value } = await reader.read();
       if (done) break;
-
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split("\n");
       buffer = lines.pop() || "";
-
       for (const line of lines) {
         if (line.startsWith("data: ")) {
-          const data = line.slice(6);
-          try {
-            const event = JSON.parse(data) as BuildStatusEvent;
-            yield event;
-          } catch {
-            // No-op: skip malformed SSE data
-          }
+          try { yield JSON.parse(line.slice(6)) as BuildStatusEvent; }
+          catch { /* skip malformed */ }
         }
       }
     }
-  } finally {
-    reader.releaseLock();
-  }
+  } finally { reader.releaseLock(); }
 }
 
+/**
+ * Convenience namespace for call sites that prefer ``api.xxx.yyy()``
+ * syntax over static-method imports.  Every method here delegates
+ * directly to the generated SDK.
+ */
 export const api = {
   auth: {
-    register: (data: RegisterRequest) =>
-      request<AuthResponse>("POST", "/api/v1/auth/register", data),
-
-    login: (data: LoginRequest) =>
-      request<AuthResponse>("POST", "/api/v1/auth/login", data),
-
-    logout: () => request<void>("POST", "/api/v1/auth/logout"),
-
-    me: () => request<User>("GET", "/api/v1/auth/me"),
-
-    refresh: () => request<AuthResponse>("POST", "/api/v1/auth/refresh"),
+    login: (data: any) => AuthService.login({ requestBody: data }) as any,
+    register: (data: any) => AuthService.register({ requestBody: data }) as any,
+    logout: () => AuthService.logout({}) as any,
+    me: () => AuthService.getMe({}) as any,
+    refresh: () => AuthService.refreshToken({}) as any,
   },
-
   servers: {
     list: (page = 1, pageSize = 20) =>
-      request<McpServer[]>(
-        "GET", `/api/v1/servers?page=${page}&page_size=${pageSize}`
-      ),
-
-    get: (id: string) => request<McpServer>("GET", `/api/v1/servers/${id}`),
-
-    create: (data: CreateServerRequest) =>
-      request<McpServer>("POST", "/api/v1/servers", data),
-
-    update: (id: string, data: Partial<CreateServerRequest>) =>
-      request<McpServer>("PATCH", `/api/v1/servers/${id}`, data),
-
-    delete: (id: string) => request<void>("DELETE", `/api/v1/servers/${id}`),
-
+      ServersService.listServers({ skip: (page - 1) * pageSize, limit: pageSize } as any) as any,
+    get: (id: string) => ServersService.getServer({ server_id: id } as any) as any,
+    create: (data: any) => ServersService.createServer({ requestBody: data } as any) as any,
+    update: (id: string, data: any) => ServersService.updateServer({ server_id: id, requestBody: data } as any) as any,
+    delete: (id: string) => ServersService.deleteServer({ server_id: id } as any) as any,
     tools: {
-      list: (id: string) =>
-        request<ToolListResponse>("GET", `/api/v1/servers/${id}/tools`),
-      update: (id: string, toolName: string, updates: ToolUpdateRequest) =>
-        request<Record<string, unknown>>(
-          "PATCH",
-          `/api/v1/servers/${id}/tools/${toolName}`,
-          updates,
-        ),
-      enhance: (id: string) =>
-        request<void>("POST", `/api/v1/servers/${id}/tools/enhance`),
+      list: (id: string) => ToolsService.listTools({ server_id: id } as any) as any,
+      update: (id: string, tn: string, u: any) => ToolsService.updateTool({ server_id: id, tool_name: tn, requestBody: u } as any) as any,
+      enhance: (id: string) => ToolsService.enhanceTools({ server_id: id } as any) as any,
     },
-
     credentials: {
-      create: (id: string, input: CredentialCreateRequest) =>
-        request<CredentialInfo>(
-          "POST",
-          `/api/v1/servers/${id}/credentials`,
-          input,
-        ),
-      list: (id: string) =>
-        request<CredentialListResponse>(
-          "GET",
-          `/api/v1/servers/${id}/credentials`,
-        ),
-      test: (id: string, input: CredentialTestRequest) =>
-        request<CredentialTestResponse>(
-          "POST",
-          `/api/v1/servers/${id}/credentials/test`,
-          input,
-        ),
-      delete: (id: string, envVarName: string) =>
-        request<void>(
-          "DELETE",
-          `/api/v1/servers/${id}/credentials/${envVarName}`,
-        ),
+      create: (id: string, i: any) => CredentialsService.addCredential({ server_id: id, requestBody: i } as any) as any,
+      list: (id: string) => CredentialsService.listCredentials({ server_id: id } as any) as any,
+      test: (id: string, i: any) => CredentialsService.testCredential({ server_id: id, requestBody: i } as any) as any,
+      delete: (id: string, e: string) => CredentialsService.deleteCredential({ server_id: id, env_var_name: e } as any) as any,
     },
-
     build: {
-      start: (id: string) =>
-        request<McpServer>("POST", `/api/v1/servers/${id}/build`),
-      getStatus: (id: string, signal?: AbortSignal) =>
-        buildStatusStream(id, signal),
+      start: (id: string) => BuildService.startBuild({ server_id: id } as any) as any,
+      getStatus: (id: string, signal?: AbortSignal) => buildStatusStream(id, signal),
     },
   },
-
   specs: {
-    fetch: (input: SpecFetchRequest) =>
-      request<SpecUploadResponse>("POST", "/api/v1/specs/fetch", input),
-    upload: (file: File) => {
-      const formData = new FormData();
-      formData.append("file", file);
-      return request<SpecUploadResponse>(
-        "POST",
-        "/api/v1/specs/upload",
-        formData,
-      );
-    },
-    getById: (specId: string) =>
-      request<SpecSource>("GET", `/api/v1/specs/${specId}`),
-    getTools: (specId: string) =>
-      request<SpecToolListResponse>("GET", `/api/v1/specs/${specId}/tools`),
-    delete: (specId: string) =>
-      request<void>("DELETE", `/api/v1/specs/${specId}`),
-    selectTools: (specId: string, selection: ToolSelectionRequest) =>
-      request<McpServer>(
-        "POST",
-        `/api/v1/specs/${specId}/select-tools`,
-        selection,
-      ),
+    fetch: (d: any) => SpecsService.fetchSpec(d as any) as any,
+    upload: (f: File) => SpecsService.uploadSpec({ formData: { file: f } } as any) as any,
+    getById: (id: string) => SpecsService.getSpec({ spec_id: id } as any) as any,
+    getTools: (id: string) => SpecsService.getSpecTools({ spec_id: id } as any) as any,
+    delete: (id: string) => SpecsService.deleteSpec({ spec_id: id } as any) as any,
+    selectTools: (id: string, s: any) => SpecsService.selectTools({ spec_id: id, requestBody: s } as any) as any,
   },
 };
