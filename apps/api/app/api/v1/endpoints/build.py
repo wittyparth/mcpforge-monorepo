@@ -10,15 +10,17 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
-from app.core.exceptions import ForbiddenError, NotFoundError, NotImplementedFeatureError
+from app.core.exceptions import AIDescriptionError, ForbiddenError, NotFoundError
 from app.core.logging import get_logger
 from app.core.sse import sse_manager
+from app.models.mcp_server import MCPServer
 from app.models.user import User
 from app.repositories.mcp_server_repo import MCPServerRepository
-from app.schemas.ai_description import AIEnhancementResponse, ToolAcceptRequest
+from app.schemas.ai_description import AIEnhancementResponse, BuildEvent, ToolAcceptRequest
 from app.services.server_builder import ServerBuilder
 
 logger = get_logger(__name__)
@@ -178,11 +180,14 @@ async def accept_ai_enhancements(
                 tool.clear()
                 tool.update(orig_by_name[name])
 
-    tools_config["tools"] = tools
-    await repo.update(
-        server,
-        tools_config=tools_config,
-        description_review_status="accepted",
+    # Use a raw UPDATE to bypass SQLAlchemy's JSON mutation tracking
+    await session.execute(
+        update(MCPServer)
+        .where(MCPServer.id == server_id)
+        .values(
+            tools_config=tools_config,
+            description_review_status="accepted",
+        )
     )
     await session.commit()
 
