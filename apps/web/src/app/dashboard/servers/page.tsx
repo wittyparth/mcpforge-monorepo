@@ -60,7 +60,7 @@ export default function ServersPage() {
       )}
 
       {/* Empty state */}
-      {data && data.items.length === 0 && (
+      {data && data.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <Server className="h-12 w-12 text-muted-foreground/50" />
@@ -80,9 +80,9 @@ export default function ServersPage() {
       )}
 
       {/* Server list */}
-      {data && data.items.length > 0 && (
+      {data && data.length > 0 && (
         <div className="space-y-4">
-          {data.items.map((server) => (
+          {data.map((server) => (
             <ServerCard key={server.id} server={server} />
           ))}
         </div>

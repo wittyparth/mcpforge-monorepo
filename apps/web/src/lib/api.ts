@@ -5,7 +5,6 @@ import type {
   RegisterRequest,
   AuthResponse,
   CreateServerRequest,
-  PaginatedResponse,
   ApiError,
 } from "@/types";
 import type {
@@ -174,7 +173,7 @@ export const api = {
 
   servers: {
     list: (page = 1, pageSize = 20) =>
-      request<PaginatedResponse<McpServer>>(
+      request<McpServer[]>(
         "GET",
         `/api/v1/servers?page=${page}&page_size=${pageSize}`,
       ),
