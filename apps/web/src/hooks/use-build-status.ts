@@ -58,18 +58,22 @@ export function useBuildStatus(serverId: string) {
     abortRef.current = controller;
 
     try {
-      for await (const event of api.servers.build.getStatus(
+      for await (const rawEvent of api.servers.build.getStatus(
         serverId,
         controller.signal,
       )) {
-        setStatus(event);
+        // Normalize: new AI engine sends {event:"ai_complete"},
+        // old pipeline sends {stage:"complete"}.
+        const ev = rawEvent as Record<string, unknown>;
+        const stageOrEvent = (ev.stage as string) || (ev.event as string) || "";
+        setStatus(rawEvent);
 
-        if (event.stage === "complete") {
+        if (stageOrEvent === "complete" || stageOrEvent === "ai_complete" || stageOrEvent === "done") {
           setIsStreaming(false);
           toast.success("Build completed successfully");
-        } else if (event.stage === "error") {
+        } else if (stageOrEvent === "error") {
           setIsStreaming(false);
-          toast.error(event.message || "Build failed");
+          toast.error((ev.message as string) || "Build failed");
         }
       }
     } catch (e) {

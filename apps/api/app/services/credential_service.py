@@ -250,6 +250,26 @@ class CredentialService:
                 error=f"Network error: {type(e).__name__}",
             )
 
+    @staticmethod
+    async def decrypt_or_none(server_id: UUID) -> str | None:  # noqa: ARG004
+        """Retrieve and decrypt a credential for the given server, or return None.
+
+        This is a convenience method for the MCP gateway context where a
+        full ``CredentialService`` instance (with a DB session) may not
+        be available.  For now it always returns ``None``; the real
+        implementation will look up the server's credentials from the
+        database and decrypt the first matching value.
+
+        Args:
+            server_id: The UUID of the target MCP server.
+
+        Returns:
+            The decrypted credential value, or ``None`` if no matching
+            credential exists.
+        """
+        # TODO(phase-2): Implement real credential lookup and decryption.
+        return None
+
     def _build_auth_headers(
         self,
         scheme: str,

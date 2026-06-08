@@ -265,18 +265,23 @@ export interface BuildStartRequest {
 }
 
 /**
- * An SSE event emitted during the server build pipeline.
+ * An SSE event emitted during the server build pipeline (legacy format).
  *
  * The backend emits these over `GET /api/v1/servers/{id}/build-status`
  * using Server-Sent Events with `data: {"stage":"...","progress":N,"message":"..."}`.
  */
 export interface BuildStatusEvent {
-  /** Current pipeline stage */
-  stage: BuildStage;
-  /** Progress percentage (0–100) */
-  progress: number;
+  /** Current pipeline stage (legacy) or AI event type (new) */
+  stage?: BuildStage;
+  event?: string;
+  /** Progress percentage (0–100) or number of tools completed */
+  progress?: number;
   /** Human-readable status message */
-  message: string;
+  message?: string;
+  /** Tool name (AI events) */
+  tool_name?: string;
+  /** Total number of tools (AI events) */
+  total?: number;
 }
 
 // ── F2: AI Description Engine Types ─────────────────────────────
@@ -354,4 +359,29 @@ export interface BuildEvent {
   cost_cents?: number;
   error?: string;
   timestamp: string;
+}
+
+// ── F4: MCP Gateway Types ──────────────────────────────────────────
+
+export interface ConnectPanelData {
+  server_slug: string;
+  gateway_url: string;
+  transport_modes: ("sse" | "streamable_http")[];
+  claude_desktop_config: Record<string, unknown>;
+  cursor_config: Record<string, unknown>;
+  test_connection_endpoint: string;
+}
+
+export interface TestConnectionResult {
+  success: boolean;
+  response_time_ms: number;
+  tools_count: number | null;
+  error: string | null;
+}
+
+export interface PauseResult {
+  server_id: string;
+  status: "paused" | "active";
+  paused_at: string | null;
+  estimated_propagation_seconds: number;
 }

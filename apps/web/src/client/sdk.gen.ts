@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { AnalyticsOverviewApiV1ServersServerIdAnalyticsGetData, ToolBreakdownApiV1ServersServerIdAnalyticsToolsGetData, ErrorLogApiV1ServersServerIdAnalyticsErrorsGetData, ClientBreakdownApiV1ServersServerIdAnalyticsClientsGetData, TimeseriesApiV1ServersServerIdAnalyticsTimeseriesGetData, ExportCsvApiV1ServersServerIdAnalyticsExportCsvGetData, RevokeApiKeyApiV1ApiKeysKeyIdDeleteData, RegisterApiV1AuthRegisterPostData, RegisterApiV1AuthRegisterPostResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostResponse, RefreshTokenApiV1AuthRefreshPostData, RefreshTokenApiV1AuthRefreshPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostResponse, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponse, StartBuildApiV1ServersServerIdBuildPostData, StartBuildApiV1ServersServerIdBuildPostResponse, BuildStatusSseApiV1ServersServerIdBuildStatusGetData, BuildStatusSseApiV1ServersServerIdBuildStatusGetResponse, AcceptAiEnhancementsApiV1ServersServerIdToolsAcceptPostData, DeployServerApiV1ServersServerIdDeployPostData, ListCredentialsApiV1ServersServerIdCredentialsGetData, ListCredentialsApiV1ServersServerIdCredentialsGetResponse, AddCredentialApiV1ServersServerIdCredentialsPostData, AddCredentialApiV1ServersServerIdCredentialsPostResponse, TestCredentialApiV1ServersServerIdCredentialsTestPostData, TestCredentialApiV1ServersServerIdCredentialsTestPostResponse, DeleteCredentialApiV1ServersServerIdCredentialsEnvVarNameDeleteData, DeleteCredentialApiV1ServersServerIdCredentialsEnvVarNameDeleteResponse, McpServerHealthMcpV1SlugHealthGetData, McpServerHealthMcpV1SlugHealthGetResponse, McpSseEndpointMcpV1SlugSseGetData, McpSseEndpointMcpV1SlugSseGetResponse, McpMessageEndpointMcpV1SlugMessagePostData, McpMessageEndpointMcpV1SlugMessagePostResponse, McpHttpEndpointMcpV1SlugPostData, McpHttpEndpointMcpV1SlugPostResponse, HealthCheckHealthGetResponse, ConnectPanelApiV1ServersServerIdConnectPostData, TestConnectionApiV1ServersServerIdTestConnectionPostData, PauseServerApiV1ServersServerIdPausePostData, ResumeServerApiV1ServersServerIdResumePostData, RollbackServerApiV1ServersServerIdRollbackPostData, ListVersionsApiV1ServersServerIdVersionsGetData, TriggerScanApiV1ServersServerIdSecurityScanPostData, GetLatestScanApiV1ServersServerIdSecurityLatestGetData, ListScansApiV1ServersServerIdSecurityScansGetData, AcknowledgeFindingApiV1ServersServerIdSecurityFindingIdAcknowledgePostData, ExportReportApiV1ServersServerIdSecurityReportJsonGetData, ListAcknowledgmentsApiV1ServersServerIdSecurityAcknowledgmentsGetData, ApiHealthApiV1ServersHealthGetResponse, ListServersApiV1ServersGetData, ListServersApiV1ServersGetResponse, CreateServerApiV1ServersPostData, CreateServerApiV1ServersPostResponse, GetServerApiV1ServersServerIdGetData, GetServerApiV1ServersServerIdGetResponse, UpdateServerApiV1ServersServerIdPatchData, UpdateServerApiV1ServersServerIdPatchResponse, DeleteServerApiV1ServersServerIdDeleteData, DeleteServerApiV1ServersServerIdDeleteResponse, FetchSpecApiV1SpecsFetchPostData, FetchSpecApiV1SpecsFetchPostResponse, UploadSpecApiV1SpecsUploadPostData, UploadSpecApiV1SpecsUploadPostResponse, GetSpecToolsApiV1SpecsSpecIdToolsGetData, GetSpecToolsApiV1SpecsSpecIdToolsGetResponse, SelectToolsApiV1SpecsSpecIdSelectToolsPostData, SelectToolsApiV1SpecsSpecIdSelectToolsPostResponse, GetSpecApiV1SpecsSpecIdGetData, GetSpecApiV1SpecsSpecIdGetResponse, DeleteSpecApiV1SpecsSpecIdDeleteData, DeleteSpecApiV1SpecsSpecIdDeleteResponse, UpdateMemberApiV1TeamMembersUserIdPatchData, RemoveMemberApiV1TeamMembersUserIdDeleteData, ListToolsApiV1ServersServerIdToolsGetData, ListToolsApiV1ServersServerIdToolsGetResponse, UpdateToolApiV1ServersServerIdToolsToolNamePatchData, UpdateToolApiV1ServersServerIdToolsToolNamePatchResponse, EnhanceToolsApiV1ServersServerIdToolsEnhancePostData } from './types.gen';
+import type { AnalyticsOverviewApiV1ServersServerIdAnalyticsGetData, ToolBreakdownApiV1ServersServerIdAnalyticsToolsGetData, ErrorLogApiV1ServersServerIdAnalyticsErrorsGetData, ClientBreakdownApiV1ServersServerIdAnalyticsClientsGetData, TimeseriesApiV1ServersServerIdAnalyticsTimeseriesGetData, ExportCsvApiV1ServersServerIdAnalyticsExportCsvGetData, RevokeApiKeyApiV1ApiKeysKeyIdDeleteData, RegisterApiV1AuthRegisterPostData, RegisterApiV1AuthRegisterPostResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostResponse, RefreshTokenApiV1AuthRefreshPostData, RefreshTokenApiV1AuthRefreshPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostResponse, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponse, StartBuildApiV1ServersServerIdBuildPostData, StartBuildApiV1ServersServerIdBuildPostResponse, BuildStatusSseApiV1ServersServerIdBuildStatusGetData, BuildStatusSseApiV1ServersServerIdBuildStatusGetResponse, AcceptAiEnhancementsApiV1ServersServerIdToolsAcceptPostData, AcceptAiEnhancementsApiV1ServersServerIdToolsAcceptPostResponse, DeployServerApiV1ServersServerIdDeployPostData, ListCredentialsApiV1ServersServerIdCredentialsGetData, ListCredentialsApiV1ServersServerIdCredentialsGetResponse, AddCredentialApiV1ServersServerIdCredentialsPostData, AddCredentialApiV1ServersServerIdCredentialsPostResponse, TestCredentialApiV1ServersServerIdCredentialsTestPostData, TestCredentialApiV1ServersServerIdCredentialsTestPostResponse, DeleteCredentialApiV1ServersServerIdCredentialsEnvVarNameDeleteData, DeleteCredentialApiV1ServersServerIdCredentialsEnvVarNameDeleteResponse, McpServerHealthMcpV1SlugHealthGetData, McpServerHealthMcpV1SlugHealthGetResponse, McpSseEndpointMcpV1SlugSseGetData, McpSseEndpointMcpV1SlugSseGetResponse, McpMessageEndpointMcpV1SlugMessagePostData, McpMessageEndpointMcpV1SlugMessagePostResponse, McpHttpGetEndpointMcpV1SlugGetData, McpHttpGetEndpointMcpV1SlugGetResponse, McpHttpEndpointMcpV1SlugPostData, McpHttpEndpointMcpV1SlugPostResponse, HealthCheckHealthGetResponse, ConnectPanelApiV1ServersServerIdConnectGetData, ConnectPanelApiV1ServersServerIdConnectGetResponse, TestConnectionApiV1ServersServerIdConnectTestPostData, TestConnectionApiV1ServersServerIdConnectTestPostResponse, PauseServerApiV1ServersServerIdPausePostData, PauseServerApiV1ServersServerIdPausePostResponse, ResumeServerApiV1ServersServerIdResumePostData, ResumeServerApiV1ServersServerIdResumePostResponse, RollbackServerApiV1ServersServerIdRollbackPostData, ListVersionsApiV1ServersServerIdVersionsGetData, TriggerScanApiV1ServersServerIdSecurityScanPostData, GetLatestScanApiV1ServersServerIdSecurityLatestGetData, ListScansApiV1ServersServerIdSecurityScansGetData, AcknowledgeFindingApiV1ServersServerIdSecurityFindingIdAcknowledgePostData, ExportReportApiV1ServersServerIdSecurityReportJsonGetData, ListAcknowledgmentsApiV1ServersServerIdSecurityAcknowledgmentsGetData, ApiHealthApiV1ServersHealthGetResponse, ListServersApiV1ServersGetData, ListServersApiV1ServersGetResponse, CreateServerApiV1ServersPostData, CreateServerApiV1ServersPostResponse, GetServerApiV1ServersServerIdGetData, GetServerApiV1ServersServerIdGetResponse, UpdateServerApiV1ServersServerIdPatchData, UpdateServerApiV1ServersServerIdPatchResponse, DeleteServerApiV1ServersServerIdDeleteData, DeleteServerApiV1ServersServerIdDeleteResponse, FetchSpecApiV1SpecsFetchPostData, FetchSpecApiV1SpecsFetchPostResponse, UploadSpecApiV1SpecsUploadPostData, UploadSpecApiV1SpecsUploadPostResponse, GetSpecToolsApiV1SpecsSpecIdToolsGetData, GetSpecToolsApiV1SpecsSpecIdToolsGetResponse, SelectToolsApiV1SpecsSpecIdSelectToolsPostData, SelectToolsApiV1SpecsSpecIdSelectToolsPostResponse, GetSpecApiV1SpecsSpecIdGetData, GetSpecApiV1SpecsSpecIdGetResponse, DeleteSpecApiV1SpecsSpecIdDeleteData, DeleteSpecApiV1SpecsSpecIdDeleteResponse, UpdateMemberApiV1TeamMembersUserIdPatchData, RemoveMemberApiV1TeamMembersUserIdDeleteData, ListToolsApiV1ServersServerIdToolsGetData, ListToolsApiV1ServersServerIdToolsGetResponse, UpdateToolApiV1ServersServerIdToolsToolNamePatchData, UpdateToolApiV1ServersServerIdToolsToolNamePatchResponse, EnhanceToolsApiV1ServersServerIdToolsEnhancePostData, EnhanceToolsApiV1ServersServerIdToolsEnhancePostResponse } from './types.gen';
 
 export class AnalyticsService {
     /**
@@ -456,12 +456,12 @@ export class BillingService {
 export class BuildService {
     /**
      * Start Build
-     * Start a build (F1 minimal: marks server active).
+     * Start a build — runs the AI enhancement pipeline via ServerBuilder.
      * @param data The data for the request.
      * @param data.serverId
      * @param data.authorization
      * @param data.accessToken
-     * @returns MCPServerResponse Successful Response
+     * @returns AIEnhancementResponse Successful Response
      * @throws ApiError
      */
     public static startBuild(data: StartBuildApiV1ServersServerIdBuildPostData): CancelablePromise<StartBuildApiV1ServersServerIdBuildPostResponse> {
@@ -485,7 +485,7 @@ export class BuildService {
     
     /**
      * Build Status Sse
-     * SSE stream of build events (F1 minimal: single event then close).
+     * SSE stream of build events — real-time AI enhancement progress.
      * @param data The data for the request.
      * @param data.serverId
      * @param data.authorization
@@ -514,21 +514,32 @@ export class BuildService {
     
     /**
      * Accept Ai Enhancements
-     * Accept the AI's proposed descriptions. Pending F2.
+     * Accept AI-proposed tool description enhancements.
      * @param data The data for the request.
      * @param data.serverId
+     * @param data.requestBody
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static acceptAiEnhancements(data: AcceptAiEnhancementsApiV1ServersServerIdToolsAcceptPostData): CancelablePromise<void> {
+    public static acceptAiEnhancements(data: AcceptAiEnhancementsApiV1ServersServerIdToolsAcceptPostData): CancelablePromise<AcceptAiEnhancementsApiV1ServersServerIdToolsAcceptPostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/servers/{server_id}/tools/accept',
             path: {
                 server_id: data.serverId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
@@ -750,8 +761,35 @@ export class DefaultService {
     }
     
     /**
+     * Mcp Http Get Endpoint
+     * GET on the StreamableHTTP endpoint — returns an SSE heartbeat stream.
+     *
+     * Per the MCP StreamableHTTP spec, the GET endpoint is used to open a
+     * long-lived connection for server-initiated messages (heartbeats).
+     * @param data The data for the request.
+     * @param data.slug
+     * @returns unknown Successful Response
+     * @throws ApiError
+     */
+    public static mcpHttpGetEndpointMcpV1SlugGet(data: McpHttpGetEndpointMcpV1SlugGetData): CancelablePromise<McpHttpGetEndpointMcpV1SlugGetResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/mcp/v1/{slug}/',
+            path: {
+                slug: data.slug
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
      * Mcp Http Endpoint
      * StreamableHTTP transport endpoint for MCP protocol (auth required).
+     *
+     * Accepts JSON-RPC 2.0 requests and returns JSON-RPC responses.
+     * Session tracking uses the ``MCP-Session-Id`` request/response header.
      * @param data The data for the request.
      * @param data.slug
      * @returns unknown Successful Response
@@ -792,91 +830,138 @@ export class DefaultService {
 export class GatewayService {
     /**
      * Connect Panel
-     * Get connection details for the gateway (URLs, auth methods). Pending F4.
+     * Get connection details for the gateway.
+     *
+     * Returns URLs and copy-ready config snippets for Claude Desktop and
+     * Cursor so the user can plug their MCP server into any MCP host.
      * @param data The data for the request.
      * @param data.serverId
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns ConnectPanelResponse Successful Response
      * @throws ApiError
      */
-    public static connectPanel(data: ConnectPanelApiV1ServersServerIdConnectPostData): CancelablePromise<void> {
+    public static connectPanel(data: ConnectPanelApiV1ServersServerIdConnectGetData): CancelablePromise<ConnectPanelApiV1ServersServerIdConnectGetResponse> {
         return __request(OpenAPI, {
-            method: 'POST',
+            method: 'GET',
             url: '/api/v1/servers/{server_id}/connect',
             path: {
                 server_id: data.serverId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Test Connection
-     * Dry-run a tool call through the gateway. Pending F4.
+     * Dry-run a connectivity check against the upstream server.
+     *
+     * Attempts an HTTP GET to the server's ``base_url`` to verify the
+     * upstream is reachable and measure round-trip latency. This is a
+     * lightweight connectivity test — the full MCP ``tools/list``
+     * handshake requires the gateway pipeline (Phase 2).
      * @param data The data for the request.
      * @param data.serverId
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns TestConnectionResponse Successful Response
      * @throws ApiError
      */
-    public static testConnection(data: TestConnectionApiV1ServersServerIdTestConnectionPostData): CancelablePromise<void> {
+    public static testConnection(data: TestConnectionApiV1ServersServerIdConnectTestPostData): CancelablePromise<TestConnectionApiV1ServersServerIdConnectTestPostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/servers/{server_id}/test-connection',
+            url: '/api/v1/servers/{server_id}/connect/test',
             path: {
                 server_id: data.serverId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Pause Server
-     * Pause a server (stops accepting requests, retains config). Pending F4.
+     * Pause a server — stop accepting requests but retain config.
+     *
+     * The paused server will appear as ``paused`` in the dashboard and
+     * the gateway will reject incoming MCP requests until the server is
+     * resumed.
      * @param data The data for the request.
      * @param data.serverId
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns PauseResponse Successful Response
      * @throws ApiError
      */
-    public static pauseServer(data: PauseServerApiV1ServersServerIdPausePostData): CancelablePromise<void> {
+    public static pauseServer(data: PauseServerApiV1ServersServerIdPausePostData): CancelablePromise<PauseServerApiV1ServersServerIdPausePostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/servers/{server_id}/pause',
             path: {
                 server_id: data.serverId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Resume Server
-     * Resume a paused server. Pending F4.
+     * Resume a paused server — re-enable MCP requests.
+     *
+     * Restores the server to ``active`` status so the gateway once again
+     * accepts incoming MCP requests.
      * @param data The data for the request.
      * @param data.serverId
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns PauseResponse Successful Response
      * @throws ApiError
      */
-    public static resumeServer(data: ResumeServerApiV1ServersServerIdResumePostData): CancelablePromise<void> {
+    public static resumeServer(data: ResumeServerApiV1ServersServerIdResumePostData): CancelablePromise<ResumeServerApiV1ServersServerIdResumePostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/servers/{server_id}/resume',
             path: {
                 server_id: data.serverId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Rollback Server
-     * Roll back to a previous version. Pending F4.
+     * Roll back to a previous server version. Pending Phase 7.
      * @param data The data for the request.
      * @param data.serverId
      * @throws ApiError
@@ -897,7 +982,7 @@ export class GatewayService {
     
     /**
      * List Versions
-     * List version history. Pending F4.
+     * List version history for a server. Pending Phase 7.
      * @param data The data for the request.
      * @param data.serverId
      * @throws ApiError
@@ -1608,14 +1693,16 @@ export class ToolsService {
     
     /**
      * Enhance Tools
-     * Re-run AI enhancement on the server's tools. Pending F2.
+     * Re-run AI enhancement on the server's tools.
      * @param data The data for the request.
      * @param data.serverId
+     * @param data.requestBody
      * @param data.authorization
      * @param data.accessToken
+     * @returns AIEnhancementResponse Successful Response
      * @throws ApiError
      */
-    public static enhanceTools(data: EnhanceToolsApiV1ServersServerIdToolsEnhancePostData): CancelablePromise<void> {
+    public static enhanceTools(data: EnhanceToolsApiV1ServersServerIdToolsEnhancePostData): CancelablePromise<EnhanceToolsApiV1ServersServerIdToolsEnhancePostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/servers/{server_id}/tools/enhance',
@@ -1628,9 +1715,10 @@ export class ToolsService {
             headers: {
                 authorization: data.authorization
             },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }

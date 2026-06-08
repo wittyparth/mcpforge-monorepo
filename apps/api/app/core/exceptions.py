@@ -62,6 +62,13 @@ class ValidationError(AppError):
         self.field = field
 
 
+class InvalidParamsError(AppError):
+    """Invalid parameters (422)."""
+
+    def __init__(self, message: str = "Invalid parameters") -> None:
+        super().__init__(code="INVALID_PARAMS", message=message, status_code=422)
+
+
 class RateLimitError(AppError):
     """Rate limit exceeded (429)."""
 
@@ -163,6 +170,13 @@ class UnsupportedSpecVersionError(AppError):
     ) -> None:
         super().__init__(code="UNSUPPORTED_SPEC_VERSION", message=message, status_code=422)
         self.suggestion = suggestion
+
+
+class SSRFBlockedError(AppError):
+    """SSRF guard blocked the URL (502)."""
+
+    def __init__(self, message: str = "URL blocked by SSRF guard") -> None:
+        super().__init__(code="SSRF_BLOCKED", message=message, status_code=502)
 
 
 class AIDescriptionError(AppError):

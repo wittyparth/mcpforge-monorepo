@@ -25,6 +25,9 @@ import { CredentialTestResult } from "@/components/builder/credential-test-resul
 import { CopyToClipboard } from "@/components/shared/copy-to-clipboard";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
+import { ConnectPanel } from "@/components/server/connect-panel";
+import { PauseResumeToggle } from "@/components/server/pause-resume-toggle";
+import { DeployButton } from "@/components/server/deploy-button";
 import { useServer } from "@/hooks/use-servers";
 import { useTools, useUpdateTool, useEnhanceTools } from "@/hooks/use-tools";
 import { useCredentials, useCreateCredential, useTestCredential, useDeleteCredential } from "@/hooks/use-credentials";
@@ -158,6 +161,7 @@ export default function ServerDetailPage({ params }: { params: Promise<{ id: str
           <TabsTrigger value="tools">Tools</TabsTrigger>
           <TabsTrigger value="credentials">Credentials</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         {/* ══ Overview ══ */}
@@ -325,6 +329,30 @@ export default function ServerDetailPage({ params }: { params: Promise<{ id: str
               <BarChart3 className="h-12 w-12 text-muted-foreground/30" />
               <h3 className="mt-4 text-lg font-medium">Analytics coming in Phase 7</h3>
               <p className="mt-2 max-w-md text-sm text-muted-foreground">Detailed usage analytics, request logs, and performance metrics will be available in a future release.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ══ Settings ══ */}
+        <TabsContent value="settings" className="space-y-6">
+          <Card>
+            <CardHeader><CardTitle>Gateway URL</CardTitle><CardDescription>Connect your MCP client to this server</CardDescription></CardHeader>
+            <CardContent>
+              <ConnectPanel serverSlug={server.slug} serverId={id} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Server Status</CardTitle><CardDescription>Pause or resume the MCP server gateway</CardDescription></CardHeader>
+            <CardContent>
+              <PauseResumeToggle serverId={id} status={server.status as "active" | "paused"} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle>Deployment</CardTitle><CardDescription>Deploy your server to make it available via MCP</CardDescription></CardHeader>
+            <CardContent>
+              <DeployButton serverId={id} status={server.status} />
             </CardContent>
           </Card>
         </TabsContent>

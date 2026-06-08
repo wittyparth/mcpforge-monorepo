@@ -1,69 +1,96 @@
-"""Pydantic schemas for the MCP Gateway admin endpoints (F4)."""
+"""Pydantic schemas for the MCP Gateway admin endpoints (F4).
+
+These are the request/response models used by the gateway management REST
+endpoints — not the MCP protocol messages themselves (see
+``mcp_protocol.py`` for those).
+"""
 
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ConnectPanelResponse(BaseModel):
-    """GET /api/v1/servers/{id}/connect — connection details for the gateway."""
+    """GET /api/v1/servers/{id}/connect — connection details for the gateway.
 
-    server_id: UUID
-    slug: str
-    transport: Literal["sse", "streamable_http"]
-    sse_endpoint: str
-    http_endpoint: str
-    auth_required: bool
-    auth_methods: list[Literal["jwt_cookie", "bearer_header", "api_key"]] = Field(
-        default_factory=list
+    Returned when a user views the "Connect" panel for their deployed MCP
+    server.  Includes copy-ready config snippets for Claude Desktop and
+    Cursor.
+    """
+
+    server_slug: str
+    """URL-safe slug that identifies this server in the gateway."""
+
+    gateway_url: str
+    """Base URL of the MCP gateway (e.g. ``https://mcpforge-api.example.com``)."""
+
+    transport_modes: list[Literal["sse", "streamable_http", "both"]] = Field(
+        default_factory=lambda: ["sse", "streamable_http"]
     )
-    example_client_config: dict[str, str] = Field(default_factory=dict)
+    """Supported transport modes for this server."""
 
+    claude_desktop_config: dict[str, Any] = Field(default_factory=dict)
+    """Pre-built JSON snippet ready to paste into Claude Desktop's config file."""
 
-class TestConnectionRequest(BaseModel):
-    """POST /api/v1/servers/{id}/test-connection — dry-run a tool call."""
+    cursor_config: dict[str, Any] = Field(default_factory=dict)
+    """Pre-built JSON snippet ready to paste into Cursor's MCP settings."""
 
-    tool_name: str
-    arguments: dict[str, object] = Field(default_factory=dict)
+    test_connection_endpoint: str
+    """URL of the test-connection endpoint for quick verification."""
 
 
 class TestConnectionResponse(BaseModel):
-    """Result of a dry-run tool call."""
+    """POST /api/v1/servers/{id}/test-connection — result of a dry-run call.
+
+    Unlike the credential test (which tests auth), this tests the full
+    MCP tool invocation pipeline from gateway through upstream.
+    """
 
     success: bool
-    status_code: int | None
-    latency_ms: int
-    response_excerpt: str | None = Field(
-        default=None, description="First 1KB of response, or error message"
-    )
+    """Whether the test tool call completed without error."""
+
+    response_time_ms: int
+    """Round-trip time in milliseconds for the test call."""
+
+    tools_count: int | None = None
+    """Number of tools the server reported (available after a ``tools/list``)."""
+
     error: str | None = None
+    """Human-readable error message when ``success`` is ``False``."""
 
 
 class DeployRequest(BaseModel):
-    """POST /api/v1/servers/{id}/deploy — deploy the server (triggers security scan first)."""
+    """POST /api/v1/servers/{id}/deploy — deploy the server.
 
-    run_security_scan: bool = Field(default=True)
-    block_on_critical: bool = Field(default=True)
+    The deploy pipeline fetches the OpenAPI spec, generates tools, runs
+    a security scan (unless skipped), and activates the gateway.
+    """
 
-
-class DeployResponse(BaseModel):
-    """Response from a deploy request."""
-
-    server_id: UUID
-    status: Literal["deploying", "active", "paused", "scan_failed", "error"]
-    message: str
-    scan_id: UUID | None = None
-    deployed_at: datetime | None = None
+    skip_security_scan: bool = Field(
+        default=False,
+        description="If True, skip the security scan and deploy immediately",
+    )
 
 
 class PauseResponse(BaseModel):
     """Response from POST /api/v1/servers/{id}/pause and /resume."""
 
+    model_config = ConfigDict(from_attributes=True)
+
     server_id: UUID
-    status: str
+    """The server that was paused or resumed."""
+
+    status: Literal["paused", "active"]
+    """Current status of the server after the operation."""
+
     paused_at: datetime | None = None
-    resumed_at: datetime | None = None
+    """When the server was paused (``None`` if the server is active)."""
+
+    estimated_propagation_seconds: int = Field(
+        default=5,
+        description="Estimated time for the status change to propagate through the gateway",
+    )

@@ -75,7 +75,7 @@ const ToolRow = React.forwardRef<HTMLDivElement, ToolRowProps>(
         </div>
 
         {/* ── Warnings ── */}
-        {tool.warnings.length > 0 && (
+        {tool.warnings && tool.warnings.length > 0 && (
           <div
             onClick={(e) => {
               // Prevent row toggle when interacting with the warnings popover

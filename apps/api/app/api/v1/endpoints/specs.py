@@ -261,6 +261,12 @@ async def select_tools(
         tools_config=tools_config,
         transport_mode=body.transport_mode,
     )
+    # Servers start as "active" — they are ready to use immediately.
+    # The AI enhancement pipeline (F2) is triggered explicitly via
+    # POST /tools/enhance, which transitions status to "in_progress",
+    # then "review" on completion.
+    server.status = "active"
+    await session.flush()
 
     logger.info(
         "select_tools_server_created",

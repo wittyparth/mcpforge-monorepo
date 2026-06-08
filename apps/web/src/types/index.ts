@@ -7,4 +7,7 @@ export type {
   RegisterRequest,
   AuthResponse,
   CreateServerRequest,
+  ConnectPanelData,
+  TestConnectionResult,
+  PauseResult,
 } from "./api";

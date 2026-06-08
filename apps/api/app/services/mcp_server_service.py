@@ -8,9 +8,12 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import ConflictError, NotFoundError
+from app.core.logging import get_logger
 from app.models.mcp_server import MCPServer
 from app.repositories.mcp_server_repo import MCPServerRepository
 from app.repositories.user_repo import UserRepository
+
+logger = get_logger(__name__)
 
 
 class MCPServerService:
@@ -94,6 +97,9 @@ class MCPServerService:
     ) -> MCPServer:
         """Update a server, verifying ownership.
 
+        After a successful update the server's cached configuration is
+        invalidated so subsequent gateway requests pick up the new state.
+
         Raises:
             NotFoundError: If the server doesn't exist.
             PermissionError: If the user doesn't own the server.
@@ -102,7 +108,28 @@ class MCPServerService:
         if server.user_id != user_id:
             from app.core.exceptions import ForbiddenError
             raise ForbiddenError("You do not own this server")
-        return await self.server_repo.update(server, **kwargs)
+        updated = await self.server_repo.update(server, **kwargs)
+
+        # Invalidate the server config cache so the gateway picks up
+        # the new state (status, tools_config, etc.) on the next request.
+        if kwargs:
+            try:
+                from app.core.redis import get_redis_pool
+                from app.services.server_config_cache import ServerConfigCache
+                from redis.asyncio import Redis
+
+                pool = await get_redis_pool()
+                redis = Redis.from_pool(pool)
+                await ServerConfigCache.invalidate(updated.slug, redis)
+                await redis.close()
+            except Exception:
+                logger.warning(
+                    "cache_invalidation_failed",
+                    server_id=str(server_id),
+                    slug=updated.slug,
+                )
+
+        return updated
 
     async def delete_server(self, server_id: UUID, user_id: UUID) -> None:
         """Delete a server, verifying ownership.

@@ -56,9 +56,9 @@ function fmt(raw: string | null | undefined): string {
 export default function ServerToolsPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { slug } = use(params);
+  const { id } = use(params);
   const router = useRouter();
 
   const {
@@ -66,11 +66,11 @@ export default function ServerToolsPage({
     isLoading: serverLoading,
     isError: serverError,
     error: serverErr,
-  } = useServer(slug);
-  const { data: toolsData, isLoading: toolsLoading } = useTools(slug);
+  } = useServer(id);
+  const { data: toolsData, isLoading: toolsLoading } = useTools(id);
 
-  const enhanceTools = useEnhanceTools(slug);
-  const updateTool = useUpdateTool(slug);
+  const enhanceTools = useEnhanceTools(id);
+  const updateTool = useUpdateTool(id);
 
   const [tab, setTab] = useState("ai-review");
   const [toolSearch, setToolSearch] = useState("");
@@ -160,7 +160,7 @@ export default function ServerToolsPage({
   return (
     <div className="space-y-6">
       <Link
-        href={`/dashboard/servers/${slug}`}
+        href={`/dashboard/servers/${id}`}
         className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
@@ -242,7 +242,7 @@ export default function ServerToolsPage({
                   variant="outline"
                   className="mt-6"
                   onClick={() =>
-                    router.push(`/dashboard/servers/${slug}`)
+                    router.push(`/dashboard/servers/${id}`)
                   }
                 >
                   Go to server overview
@@ -251,7 +251,7 @@ export default function ServerToolsPage({
             </Card>
           ) : (
             <AiReviewPanel
-              serverId={slug}
+              serverId={id}
               tools={[]}
               onEnhanceAll={handleEnhance}
               onAcceptAll={handleAcceptAll}

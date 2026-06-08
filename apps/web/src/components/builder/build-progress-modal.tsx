@@ -71,7 +71,8 @@ interface EventRowProps {
 }
 
 function EventRow({ event, index }: EventRowProps) {
-  const colors = stageBadgeColors[event.stage];
+  const stageKey = (event.stage || event.event || "parsing") as BuildStage;
+  const colors = stageBadgeColors[stageKey] ?? { bg: "bg-muted/30", text: "text-muted-foreground", border: "border-muted/30" };
 
   return (
     <div
@@ -95,12 +96,12 @@ function EventRow({ event, index }: EventRowProps) {
           colors.border,
         )}
       >
-        {event.stage}
+        {event.stage || event.event || "event"}
       </Badge>
 
       {/* Message */}
       <span className="flex-1 leading-5 text-foreground/80 break-words">
-        {event.message}
+        {event.message || (event.event ? `Tool: ${event.tool_name || ""}` : "")}
       </span>
 
       {/* Progress */}
@@ -188,20 +189,25 @@ const BuildProgressModal = React.forwardRef<
 
   // ── Handle completion ───────────────────────────────────────────
 
+  const stageOrEvent = (() => {
+    const s = buildStatus.status;
+    return (s as Record<string, unknown>)?.stage as string || (s as Record<string, unknown>)?.event as string || "";
+  })();
+
   React.useEffect(() => {
-    if (buildStatus.status?.stage === "complete" && !completed) {
+    if ((stageOrEvent === "complete" || stageOrEvent === "ai_complete" || stageOrEvent === "done") && !completed) {
       setCompleted(true);
       const timer = setTimeout(() => {
         onComplete();
       }, 1000);
       return () => clearTimeout(timer);
     }
-    if (buildStatus.status?.stage === "error") {
+    if (stageOrEvent === "error") {
       setCompleted(false);
-      onError(buildStatus.status.message || "Build failed");
+      onError((buildStatus.status as Record<string, string>)?.message || "Build failed");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [buildStatus.status?.stage]);
+  }, [stageOrEvent]);
 
   // ── Auto-scroll on new events ───────────────────────────────────
 
@@ -214,8 +220,10 @@ const BuildProgressModal = React.forwardRef<
   // ── Derived state ───────────────────────────────────────────────
 
   const latestEvent = buildStatus.status;
-  const isError = latestEvent?.stage === "error" || !!buildStatus.error;
-  const isComplete = latestEvent?.stage === "complete";
+  const latestStage = (latestEvent as Record<string, unknown>)?.stage as string | undefined;
+  const latestEventName = (latestEvent as Record<string, unknown>)?.event as string | undefined;
+  const isError = latestStage === "error" || latestEventName === "error" || !!buildStatus.error;
+  const isComplete = latestStage === "complete" || latestEventName === "ai_complete" || latestEventName === "done";
   const isBuilding =
     hasBuiltOnce &&
     !isComplete &&
@@ -273,7 +281,7 @@ const BuildProgressModal = React.forwardRef<
 
         {/* ── Step indicator ── */}
         <div className="px-6 py-4 border-b border-border/50">
-          <BuildStepIndicator currentStage={latestEvent?.stage} />
+          <BuildStepIndicator currentStage={(latestStage || (latestEventName === "start" ? "generating" : latestEventName === "ai_complete" || latestEventName === "done" ? "complete" : latestEventName === "error" ? "error" : latestStage)) as BuildStage | undefined} />
         </div>
 
         {/* ── Event log ── */}

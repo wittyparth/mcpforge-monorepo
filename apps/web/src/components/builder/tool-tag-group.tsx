@@ -51,9 +51,11 @@ const ToolTagGroup = React.forwardRef<HTMLDivElement, ToolTagGroupProps>(
     return (
       <div ref={ref} className="rounded-lg border bg-card">
         {/* ── Collapsible Header ── */}
-        <button
-          type="button"
+        <div
+          role="button"
+          tabIndex={0}
           onClick={() => setIsOpen(!isOpen)}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setIsOpen(!isOpen); } }}
           className={cn(
             "flex w-full items-center justify-between px-4 py-3",
             "text-sm font-medium",
@@ -61,6 +63,7 @@ const ToolTagGroup = React.forwardRef<HTMLDivElement, ToolTagGroupProps>(
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset",
             "rounded-t-lg",
             !isOpen && "rounded-b-lg",
+            "cursor-pointer",
           )}
           aria-expanded={isOpen}
         >
@@ -122,7 +125,7 @@ const ToolTagGroup = React.forwardRef<HTMLDivElement, ToolTagGroupProps>(
               {allSelected ? "Deselect all" : "Select all"}
             </button>
           </div>
-        </button>
+        </div>
 
         {/* ── Collapsible Body ── */}
         <div

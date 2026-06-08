@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -98,15 +98,30 @@ async def mcp_message_endpoint(
     return JSONResponse(content=result)
 
 
+@router.get("/mcp/v1/{slug}/", dependencies=[Depends(authenticate_mcp_request)])
+async def mcp_http_get_endpoint(
+    slug: str,
+    request: Request,
+) -> Response:
+    """GET on the StreamableHTTP endpoint — returns an SSE heartbeat stream.
+
+    Per the MCP StreamableHTTP spec, the GET endpoint is used to open a
+    long-lived connection for server-initiated messages (heartbeats).
+    """
+    return await handle_http_request(slug, request=request)
+
+
 @router.post("/mcp/v1/{slug}/", dependencies=[Depends(authenticate_mcp_request)])
 async def mcp_http_endpoint(
     slug: str,
     request: Request,
-) -> JSONResponse:
-    """StreamableHTTP transport endpoint for MCP protocol (auth required)."""
-    body: dict[str, Any] = await request.json()
-    result = await handle_http_request(slug, body)
-    return JSONResponse(content=result)
+) -> Response:
+    """StreamableHTTP transport endpoint for MCP protocol (auth required).
+
+    Accepts JSON-RPC 2.0 requests and returns JSON-RPC responses.
+    Session tracking uses the ``MCP-Session-Id`` request/response header.
+    """
+    return await handle_http_request(slug, request=request)
 
 
 # Re-export the dependency under the canonical name for routers that

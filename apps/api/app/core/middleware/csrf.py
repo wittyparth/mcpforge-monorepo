@@ -108,6 +108,8 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         if request.url.path in _EXEMPT_PATHS:
             return await call_next(request)
+        if request.url.path.startswith("/mcp/") or request.url.path.startswith("/ws/"):
+            return await call_next(request)
         if not settings.is_production and settings.ENVIRONMENT == "testing":
             return await call_next(request)
 
