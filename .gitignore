@@ -75,6 +75,10 @@ secrets/
 # oh-my-opencode runtime cache
 .omo/
 
+# Test artifacts
+playwright-report/
+test-results/
+
 # Database
 *.db
 *.sqlite
