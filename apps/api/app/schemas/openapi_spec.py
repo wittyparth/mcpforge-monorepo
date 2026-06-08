@@ -118,7 +118,7 @@ class ToolDefinition(BaseModel):
 
     @model_serializer(mode="wrap")
     def _add_backward_compat_keys(self, nxt: Any) -> dict[str, Any]:
-        result = nxt(self)
+        result: dict[str, Any] = nxt(self)
         result["http_method"] = result.get("method", "")
         result["http_path"] = result.get("path", "")
         return result

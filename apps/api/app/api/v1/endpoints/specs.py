@@ -70,7 +70,7 @@ class _NoopR2Client:
     is_configured: bool = False
     _store: dict[str, bytes] = {}
 
-    async def put_object(self, key: str, body: bytes, **kwargs: Any) -> None:
+    async def put_object(self, key: str, body: bytes) -> None:
         self._store[key] = body
         logger.info("r2_dev_stored", key=key, bytes=len(body))
 
