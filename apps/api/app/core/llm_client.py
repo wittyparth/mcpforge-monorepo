@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import httpx
 from openai import APIConnectionError, APITimeoutError, AsyncOpenAI, RateLimitError
 from tenacity import (
     retry,
@@ -115,10 +116,16 @@ class LLMClient:
         handles retry logic with proper exponential backoff.
         """
         if cls._client is None:
+            # Create an httpx client explicitly to avoid the proxies parameter
+            # incompatibility between openai SDK and httpx 0.28+.
+            http_client = httpx.AsyncClient(
+                timeout=httpx.Timeout(settings.LLM_TIMEOUT_SECONDS),
+                follow_redirects=True,
+            )
             cls._client = AsyncOpenAI(
                 api_key=settings.LLM_API_KEY,
                 base_url=settings.LLM_BASE_URL,
-                timeout=settings.LLM_TIMEOUT_SECONDS,
+                http_client=http_client,
                 max_retries=0,
             )
         return cls._client

@@ -64,6 +64,15 @@ services:
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: dev-only-jwt-secret-please-change-in-prod-min-32-chars
       CORS_ORIGINS: '["http://localhost:3000", "http://localhost:8000"]'
+      LLM_PROVIDER: opencode-go
+      LLM_BASE_URL: https://opencode.ai/zen/go/v1
+      LLM_MODEL: deepseek-v4-flash
+      LLM_API_KEY: sk-uzE8bXWpo5Dta9wMvREgB1Mb1a74UhZ9pDElGXlA6Elppzdycapiq197z22OMrJG
+      LLM_MAX_TOKENS: 2000
+      LLM_TEMPERATURE: 0.0
+      LLM_JSON_MODE: "true"
+      RATE_LIMIT_PER_IP_PER_MINUTE: "999"
+      RATE_LIMIT_AUTH_PER_IP_PER_MINUTE: "999"
     ports:
       - "8000:8000"
     volumes:
@@ -96,6 +105,13 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/mcpforge
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET: dev-only-jwt-secret-please-change-in-prod-min-32-chars
+      LLM_PROVIDER: opencode-go
+      LLM_BASE_URL: https://opencode.ai/zen/go/v1
+      LLM_MODEL: deepseek-v4-flash
+      LLM_API_KEY: sk-uzE8bXWpo5Dta9wMvREgB1Mb1a74UhZ9pDElGXlA6Elppzdycapiq197z22OMrJG
+      LLM_MAX_TOKENS: 2000
+      LLM_TEMPERATURE: 0.0
+      LLM_JSON_MODE: "true"
     volumes:
       - ./apps/api/app:/app/app
     command:
@@ -110,6 +126,7 @@ services:
       - "-l"
       - "info"
       - "--concurrency=2"
+      - "--pool=solo"
 
   # ── Next.js frontend ────────────────────────────────────────────
   web:

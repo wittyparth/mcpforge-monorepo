@@ -28,7 +28,6 @@ celery_app = Celery(
     include=[
         "app.services.ai_description.tasks",
         "app.services.auth.tasks",
-        "app.services.analytics.tasks",
     ],
 )
 

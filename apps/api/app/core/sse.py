@@ -25,8 +25,8 @@ from typing import Any
 
 from redis.asyncio import Redis
 
+from app.core.config import settings
 from app.core.logging import get_logger
-from app.core.redis import get_redis_pool
 
 logger = get_logger(__name__)
 
@@ -67,25 +67,37 @@ class SSEManager:
         self._lock = asyncio.Lock()
 
     async def _ensure_pubsub(self) -> Any:
-        """Get or create the shared Redis pubsub connection."""
+        """Get or create the shared Redis pubsub connection.
+
+        Creates the connection directly from the URL rather than from a
+        shared pool.  A shared pool's connections are pinned to the event
+        loop that created them, which breaks when ``asyncio.run()`` is
+        called inside a Celery worker thread (different event loop).
+        """
         if self._pubsub is None:
-            pool = await get_redis_pool()
-            self._redis_conn = Redis.from_pool(pool)
+            self._redis_conn = Redis.from_url(
+                settings.REDIS_URL,
+                decode_responses=True,
+            )
             self._pubsub = self._redis_conn.pubsub()
         return self._pubsub
 
     async def publish(self, server_id: str, event_dict: dict[str, Any]) -> None:
         """Publish an event to the Redis channel for a server build.
 
-        Creates a temporary Redis client from the shared pool, publishes
-        the JSON-encoded event, and closes the client.
+        Creates a dedicated Redis client from the URL rather than from a
+        shared pool.  A shared pool's connections are pinned to the event
+        loop that created them, which breaks when ``asyncio.run()`` is
+        called inside a Celery worker thread (different event loop).
 
         Args:
             server_id: The server identifier.
             event_dict: The event data (will be JSON-encoded).
         """
-        pool = await get_redis_pool()
-        r = Redis.from_pool(pool)
+        r = Redis.from_url(
+            settings.REDIS_URL,
+            decode_responses=True,
+        )
         try:
             channel = f"sse:{server_id}"
             await r.publish(channel, json.dumps(event_dict))
