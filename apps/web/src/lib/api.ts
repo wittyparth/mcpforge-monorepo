@@ -5,7 +5,7 @@
  * Regenerate with: ``pnpm generate-client``
  */
 
-import "../client/setup";
+import "@/lib/sdk-setup";
 
 export { ApiError as ApiClientError } from "../client/core/ApiError";
 
