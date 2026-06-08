@@ -63,6 +63,26 @@ class UserRepository:
         await self.session.flush()
         return user
 
+    async def decrement_credits(self, user_id: UUID, amount: int = 1) -> int:
+        """Decrement ai_enhancement_credits by amount, return remaining or negative if exhausted."""
+        from sqlalchemy import update
+
+        from app.models.user import User
+
+        result = await self.session.execute(
+            update(User)
+            .where(User.id == user_id)
+            .where(User.ai_enhancement_credits >= amount)  # prevent going below 0
+            .values(ai_enhancement_credits=User.ai_enhancement_credits - amount)
+            .returning(User.ai_enhancement_credits)
+        )
+        remaining = result.scalar_one_or_none()
+        if remaining is None:
+            # Not enough credits or user not found
+            return -1
+        await self.session.flush()
+        return remaining
+
     async def delete(self, user: User) -> None:
         """Delete a user."""
         await self.session.delete(user)

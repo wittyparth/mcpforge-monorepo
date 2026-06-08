@@ -165,6 +165,18 @@ class UnsupportedSpecVersionError(AppError):
         self.suggestion = suggestion
 
 
+class AIDescriptionError(AppError):
+    """AI description generation failed (502)."""
+
+    def __init__(
+        self,
+        message: str = "AI description generation failed",
+        field: str | None = None,
+    ) -> None:
+        super().__init__(code="AI_DESCRIPTION_ERROR", message=message, status_code=502)
+        self.field = field
+
+
 def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
     """Handle AppError subclasses."""
     headers: dict[str, str] = {}

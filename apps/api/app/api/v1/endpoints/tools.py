@@ -1,7 +1,7 @@
 """Tool workspace endpoints (F1 + F2).
 
 F1: List + update tools (live).
-F2: AI description enhancement (stub).
+F2: AI description enhancement (ServerBuilder).
 """
 
 from __future__ import annotations
@@ -17,13 +17,16 @@ from app.core.exceptions import (
     ConflictError,
     ForbiddenError,
     NotFoundError,
-    NotImplementedFeatureError,
 )
 from app.core.logging import get_logger
 from app.models.mcp_server import MCPServer
 from app.models.user import User
+from app.repositories.mcp_server_repo import MCPServerRepository
+from app.repositories.user_repo import UserRepository
+from app.schemas.ai_description import AIEnhancementRequest, AIEnhancementResponse
 from app.schemas.mcp_server import ToolListResponse, ToolUpdateRequest
 from app.services.mcp_server_service import MCPServerService
+from app.services.server_builder import ServerBuilder
 
 logger = get_logger(__name__)
 
@@ -121,13 +124,44 @@ async def update_tool(
     return tools[tool_idx]
 
 
-@router.post("/enhance", status_code=501)
+@router.post("/enhance", response_model=AIEnhancementResponse)
 async def enhance_tools(
     server_id: UUID,
+    body: AIEnhancementRequest,
     session: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
-) -> None:
-    """Re-run AI enhancement on the server's tools. Pending F2."""
-    raise NotImplementedFeatureError(
-        "AI Engine: pending F2 (description enhancement)"
+) -> AIEnhancementResponse:
+    """Re-run AI enhancement on the server's tools."""
+    repo = MCPServerRepository(session)
+    server = await repo.get_by_id(server_id)
+    if not server:
+        raise NotFoundError("Server not found")
+    if server.user_id != current_user.id:
+        raise ForbiddenError("You do not own this server")
+
+    tools = server.tools_config.get("tools", [])
+    if not tools:
+        raise NotFoundError("Server has no tools to enhance")
+
+    user_repo = UserRepository(session)
+    user = await user_repo.get_by_id(current_user.id)
+    if user is not None and user.plan == "free" and user.ai_enhancement_credits <= 0:
+        raise ForbiddenError(
+            "Insufficient AI enhancement credits. "
+            "Upgrade your plan or wait for the next billing cycle."
+        )
+
+    builder = ServerBuilder(repo)
+    response = builder.start_build(
+        server_id,
+        current_user.id,
+        tool_names=body.tool_names,
     )
+
+    logger.info(
+        "ai_enhancement_started",
+        server_id=str(server_id),
+        tool_count=len(tools),
+        tool_names=body.tool_names,
+    )
+    return response

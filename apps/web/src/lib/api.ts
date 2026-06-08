@@ -96,7 +96,17 @@ export const api = {
     tools: {
       list: (id: string) => ToolsService.listTools({ server_id: id } as any) as any,
       update: (id: string, tn: string, u: any) => ToolsService.updateTool({ server_id: id, tool_name: tn, requestBody: u } as any) as any,
-      enhance: (id: string) => ToolsService.enhanceTools({ server_id: id } as any) as any,
+      enhance: (id: string, data?: { tool_names?: string[]; force?: boolean }) =>
+        ToolsService.enhanceTools({ server_id: id, requestBody: data } as any) as any,
+      enhanceSingle: (id: string, name: string) => {
+        const url = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/v1/servers/${id}/tools/${encodeURIComponent(name)}/enhance`;
+        return fetch(url, { method: "POST", credentials: "include" }).then((r) => {
+          if (!r.ok) throw new Error(`Enhance failed: ${r.status}`);
+          return r.json();
+        });
+      },
+      accept: (id: string, data: { accepted_tools: string[]; rejected_tools?: string[]; custom_edits?: Record<string, Record<string, unknown>> }) =>
+        BuildService.acceptAiEnhancements({ server_id: id, requestBody: data } as any) as any,
     },
     credentials: {
       create: (id: string, i: any) => CredentialsService.addCredential({ server_id: id, requestBody: i } as any) as any,

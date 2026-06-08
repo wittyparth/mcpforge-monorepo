@@ -26,6 +26,7 @@ celery_app = Celery(
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
     include=[
+        "app.services.ai_description.tasks",
         "app.services.auth.tasks",
         "app.services.analytics.tasks",
     ],

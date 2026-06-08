@@ -278,3 +278,80 @@ export interface BuildStatusEvent {
   /** Human-readable status message */
   message: string;
 }
+
+// ── F2: AI Description Engine Types ─────────────────────────────
+
+/** Quality score for an AI-enhanced tool description */
+export interface AIQualityScore {
+  functionality: number;
+  accuracy: number;
+  completeness: number;
+  context: number;
+  total: number;
+  badge: "Excellent" | "Good" | "Fair" | "Poor";
+}
+
+/** An improvement made by the AI enhancement */
+export interface AIImprovementItem {
+  field: string;
+  current: string;
+  proposed: string;
+  rationale: string;
+}
+
+/** AI-enhanced version of a single tool */
+export interface AIEnhancedTool {
+  name: string;
+  original_description: string;
+  enhanced_description: string;
+  enhanced_name?: string | null;
+  enhanced_parameters?: Record<string, unknown>[];
+  enhanced_return_description?: string | null;
+  quality_score: AIQualityScore;
+  improvements?: AIImprovementItem[];
+  cost_cents: number;
+  model: string;
+  enhanced_at: string;
+}
+
+/** Request to initiate AI enhancement */
+export interface AIEnhancementRequest {
+  tool_names?: string[];
+  force?: boolean;
+}
+
+/** Response from enhancement job submission */
+export interface AIEnhancementResponse {
+  job_id: string;
+  estimated_cost_cents: number;
+  estimated_duration_seconds: number;
+  remaining_credits: number | null;
+}
+
+/** Accept/reject AI enhancement results */
+export interface ToolAcceptRequest {
+  accepted_tools: string[];
+  rejected_tools?: string[];
+  custom_edits?: Record<string, Record<string, unknown>>;
+}
+
+/** SSE event during build pipeline */
+export interface BuildEvent {
+  event:
+    | "connected"
+    | "start"
+    | "ai_progress"
+    | "tool_enhanced"
+    | "tool_failed"
+    | "ai_complete"
+    | "done"
+    | "error";
+  server_id: string;
+  tool_name?: string;
+  progress?: number;
+  total?: number;
+  quality_score?: number;
+  cost_cents?: number;
+  error?: string;
+  timestamp: string;
+}
