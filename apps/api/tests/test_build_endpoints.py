@@ -188,3 +188,110 @@ class TestStubs:
         assert response.status_code == 501
         error_data = response.json()
         assert error_data["error"]["code"] == "NOT_IMPLEMENTED"
+
+
+class TestBuildNonExistent:
+    """POST /api/v1/servers/{server_id}/build with non-existent server."""
+
+    @pytest.mark.asyncio
+    async def test_start_build_nonexistent_server_returns_404(
+        self,
+        auth_client: AsyncClient,
+    ) -> None:
+        """Building a server that does not exist should return 404."""
+        fake_id = uuid.uuid4()
+        response = await auth_client.post(f"{BASE_URL}/{fake_id}/build")
+        assert response.status_code == 404
+        error_data = response.json()
+        assert error_data["error"]["code"] == "NOT_FOUND"
+
+
+class TestEnhanceEndpoint:
+    """POST /api/v1/servers/{server_id}/tools/enhance"""
+
+    @pytest.mark.asyncio
+    async def test_enhance_nonexistent_server_returns_404(
+        self,
+        auth_client: AsyncClient,
+    ) -> None:
+        """Enhancing a server that does not exist should return 404."""
+        fake_id = uuid.uuid4()
+        response = await auth_client.post(
+            f"{BASE_URL}/{fake_id}/tools/enhance",
+            json={"tool_names": None, "force": False},
+        )
+        assert response.status_code == 404
+        error_data = response.json()
+        assert error_data["error"]["code"] == "NOT_FOUND"
+
+    @pytest.mark.asyncio
+    async def test_enhance_other_user_server_returns_403(
+        self,
+        auth_client: AsyncClient,
+        test_session: AsyncSession,
+        other_user: User,
+    ) -> None:
+        """Enhancing another user's server should return 403."""
+        repo = MCPServerRepository(test_session)
+        server = await repo.create(
+            user_id=other_user.id,
+            slug=f"enhance-forbid-{uuid.uuid4().hex[:8]}",
+            name="Enhance Forbidden",
+            base_url="https://other.example.com",
+            tools_config={
+                "tools": [
+                    {"name": "tool_1", "description": "First tool"},
+                ]
+            },
+        )
+
+        response = await auth_client.post(
+            f"{BASE_URL}/{server.id}/tools/enhance",
+            json={"tool_names": None, "force": False},
+        )
+        assert response.status_code == 403
+        error_data = response.json()
+        assert error_data["error"]["code"] == "FORBIDDEN"
+
+
+class TestAcceptEndpoint:
+    """POST /api/v1/servers/{server_id}/tools/accept"""
+
+    @pytest.mark.asyncio
+    async def test_accept_nonexistent_server_returns_404(
+        self,
+        auth_client: AsyncClient,
+    ) -> None:
+        """Accepting enhancements on a non-existent server should return 404."""
+        fake_id = uuid.uuid4()
+        response = await auth_client.post(
+            f"{BASE_URL}/{fake_id}/tools/accept",
+            json={"accepted_tools": [], "rejected_tools": [], "custom_edits": {}},
+        )
+        assert response.status_code == 404
+        error_data = response.json()
+        assert error_data["error"]["code"] == "NOT_FOUND"
+
+    @pytest.mark.asyncio
+    async def test_accept_other_user_server_returns_403(
+        self,
+        auth_client: AsyncClient,
+        test_session: AsyncSession,
+        other_user: User,
+    ) -> None:
+        """Accepting enhancements on another user's server should return 403."""
+        repo = MCPServerRepository(test_session)
+        server = await repo.create(
+            user_id=other_user.id,
+            slug=f"accept-forbid-{uuid.uuid4().hex[:8]}",
+            name="Accept Forbidden",
+            base_url="https://other.example.com",
+        )
+
+        response = await auth_client.post(
+            f"{BASE_URL}/{server.id}/tools/accept",
+            json={"accepted_tools": [], "rejected_tools": [], "custom_edits": {}},
+        )
+        assert response.status_code == 403
+        error_data = response.json()
+        assert error_data["error"]["code"] == "FORBIDDEN"
