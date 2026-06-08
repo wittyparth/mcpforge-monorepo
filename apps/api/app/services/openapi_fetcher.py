@@ -182,6 +182,14 @@ class OpenAPIFetcher:
             )
 
         content = response.content
+        logger.info(
+            "spec_fetch_debug",
+            url=url,
+            status_code=response.status_code,
+            content_type=response.headers.get("content-type"),
+            content_length=len(content),
+            content_preview=content[:200].decode("utf-8", errors="replace"),
+        )
 
         # 4. Size check
         if len(content) > self.max_size:
@@ -389,7 +397,12 @@ class OpenAPIFetcher:
             A ``SpecUploadResponse`` built from the existing record.
         """
         existing_content = await self.r2.get_object(existing.r2_key)
-        existing_spec = self._parse_content(existing_content, "application/json")
+        if not existing_content:
+            # R2 not available (dev mode) — re-parse from freshly fetched bytes
+            existing_spec = self._parse_content(content, "application/json")
+            existing_content = content
+        else:
+            existing_spec = self._parse_content(existing_content, "application/json")
         tools = await self.analyzer.extract_tools(existing_spec)
         elapsed = int((time.monotonic() - start) * 1000)
         logger.info(

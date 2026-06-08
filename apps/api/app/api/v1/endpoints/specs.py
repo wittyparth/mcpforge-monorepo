@@ -59,10 +59,45 @@ class _AsyncSpecAnalyzer:
         return self._inner.extract_tools(spec_dict)
 
 
+class _NoopR2Client:
+    """In-memory R2 client for development without R2 infrastructure.
+
+    Stores spec content in a process-local dict so tools, select-tools,
+    and delete operations all work correctly during development.
+    Data is lost on restart — acceptable for dev mode.
+    """
+
+    is_configured: bool = False
+    _store: dict[str, bytes] = {}
+
+    async def put_object(self, key: str, body: bytes, **kwargs: Any) -> None:
+        self._store[key] = body
+        logger.info("r2_dev_stored", key=key, bytes=len(body))
+
+    async def get_object(self, key: str) -> bytes:
+        content = self._store.get(key)
+        if content is None:
+            logger.warning("r2_dev_miss", key=key)
+        return content or b""
+
+    async def delete_object(self, key: str) -> None:
+        self._store.pop(key, None)
+        logger.info("r2_dev_deleted", key=key)
+
+
+def _build_r2() -> R2Client:
+    """Return a configured R2 client, falling back to a no-op in dev."""
+    try:
+        return R2Client()
+    except RuntimeError:
+        logger.info("r2_not_configured_using_noop_client")
+        return _NoopR2Client()  # type: ignore[return-value]
+
+
 def _build_fetcher(session: AsyncSession) -> OpenAPIFetcher:
     """Construct an OpenAPIFetcher with all required dependencies."""
     return OpenAPIFetcher(
-        r2=R2Client(),
+        r2=_build_r2(),
         spec_repo=SpecRepository(session),
         analyzer=_AsyncSpecAnalyzer(),
     )
@@ -139,8 +174,10 @@ async def get_spec_tools(
     if not spec.r2_key:
         raise NotFoundError("Spec has no stored content")
 
-    r2 = R2Client()
+    r2 = _build_r2()
     content = await r2.get_object(spec.r2_key)
+    if not content:
+        raise NotFoundError("Spec content not available (R2 not configured)")
     spec_dict: dict[str, Any] = json.loads(content)
 
     analyzer = SpecAnalyzer()
@@ -181,8 +218,10 @@ async def select_tools(
         raise NotFoundError("Spec has no stored content")
 
     # Re-parse spec from R2 for a fresh analysis
-    r2 = R2Client()
+    r2 = _build_r2()
     content = await r2.get_object(spec.r2_key)
+    if not content:
+        raise NotFoundError("Spec content not available (R2 not configured)")
     spec_dict: dict[str, Any] = json.loads(content)
 
     # Extract all tools and apply user selection
@@ -275,7 +314,7 @@ async def delete_spec(
     # Best-effort R2 delete
     if spec.r2_key:
         try:
-            r2 = R2Client()
+            r2 = _build_r2()
             await r2.delete_object(spec.r2_key)
         except RuntimeError:
             logger.warning(

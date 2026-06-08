@@ -116,9 +116,9 @@ class ToolDefinition(BaseModel):
 
     # ── Serializer: both old and new names in output ────────────────
 
-    @model_serializer(mode="plain")
-    def _add_backward_compat_keys(self) -> dict[str, Any]:
-        result = self.model_dump(by_alias=True)
+    @model_serializer(mode="wrap")
+    def _add_backward_compat_keys(self, nxt: Any) -> dict[str, Any]:
+        result = nxt(self)
         result["http_method"] = result.get("method", "")
         result["http_path"] = result.get("path", "")
         return result
