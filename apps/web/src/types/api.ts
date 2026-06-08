@@ -16,19 +16,19 @@ export interface McpServer {
   user_id: string;
   slug: string;
   name: string;
-  description: string | null;
+  description?: string | null;
   status: "building" | "active" | "paused" | "error";
-  spec_url: string | null;
+  spec_url?: string | null;
   base_url: string;
   auth_scheme: "none" | "api_key" | "bearer" | "basic" | "oauth2";
   tools_config: unknown;
   transport_mode: "sse" | "streamable_http" | "both";
   total_calls: number;
   monthly_calls: number;
-  last_call_at: string | null;
+  last_call_at?: string | null;
   version: number;
   created_at: string;
-  updated_at: string;
+  updated_at?: string | null;
 }
 
 export interface ApiError {

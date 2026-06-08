@@ -42,7 +42,7 @@ function fmt(raw: string | null): string {
   return new Date(raw).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 }
 
-function fmtT(raw: string | null): string {
+function fmtT(raw: string | null | undefined): string {
   if (!raw) return "—";
   return new Date(raw).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }

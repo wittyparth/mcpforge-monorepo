@@ -174,8 +174,7 @@ export const api = {
   servers: {
     list: (page = 1, pageSize = 20) =>
       request<McpServer[]>(
-        "GET",
-        `/api/v1/servers?page=${page}&page_size=${pageSize}`,
+        "GET", `/api/v1/servers?page=${page}&page_size=${pageSize}`
       ),
 
     get: (id: string) => request<McpServer>("GET", `/api/v1/servers/${id}`),
