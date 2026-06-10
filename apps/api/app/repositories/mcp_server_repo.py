@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.mcp_server import MCPServer
@@ -29,6 +29,7 @@ class MCPServerRepository:
         auth_header_name: str | None = None,
         tools_config: dict[str, Any] | None = None,
         transport_mode: str = "sse",
+        team_id: UUID | None = None,
     ) -> MCPServer:
         """Create a new MCP server record."""
         server = MCPServer(
@@ -42,6 +43,7 @@ class MCPServerRepository:
             auth_header_name=auth_header_name,
             tools_config=tools_config or {},
             transport_mode=transport_mode,
+            team_id=team_id,
         )
         self.session.add(server)
         await self.session.flush()
@@ -71,6 +73,27 @@ class MCPServerRepository:
         result = await self.session.execute(
             select(MCPServer)
             .where(MCPServer.user_id == user_id)
+            .order_by(MCPServer.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
+    async def list_by_user_or_team(
+        self,
+        user_id: UUID,
+        team_ids: list[UUID],
+        skip: int = 0,
+        limit: int = 20,
+    ) -> list[MCPServer]:
+        """List servers owned by the user OR belonging to any of the given teams."""
+        conditions = [MCPServer.user_id == user_id]
+        if team_ids:
+            conditions.append(MCPServer.team_id.in_(team_ids))
+
+        result = await self.session.execute(
+            select(MCPServer)
+            .where(or_(*conditions))
             .order_by(MCPServer.created_at.desc())
             .offset(skip)
             .limit(limit)

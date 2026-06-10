@@ -100,6 +100,13 @@ class UpstreamError(AppError):
         super().__init__(code="UPSTREAM_ERROR", message=message, status_code=502)
 
 
+class ServiceUnavailableError(AppError):
+    """Service temporarily unavailable (503)."""
+
+    def __init__(self, message: str = "Service unavailable") -> None:
+        super().__init__(code="SERVICE_UNAVAILABLE", message=message, status_code=503)
+
+
 class NotImplementedFeatureError(AppError):
     """A route stub that exists in the skeleton but has not been implemented yet.
 
@@ -177,6 +184,22 @@ class SSRFBlockedError(AppError):
 
     def __init__(self, message: str = "URL blocked by SSRF guard") -> None:
         super().__init__(code="SSRF_BLOCKED", message=message, status_code=502)
+
+
+class PlanLimitExceededError(AppError):
+    """Plan limit exceeded (402 Payment Required)."""
+
+    def __init__(
+        self,
+        message: str = "Plan limit exceeded. Please upgrade your plan.",
+        resource: str | None = None,
+        current: int = 0,
+        limit: int | None = None,
+    ) -> None:
+        super().__init__(code="PLAN_LIMIT_EXCEEDED", message=message, status_code=402)
+        self.resource = resource
+        self.current = current
+        self.limit = limit
 
 
 class AIDescriptionError(AppError):

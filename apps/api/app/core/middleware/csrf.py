@@ -55,7 +55,12 @@ _EXEMPT_PATHS = frozenset(
         "/api/v1/auth/forgot-password",
         "/api/v1/auth/reset-password",
         "/api/v1/auth/github/callback",
+        "/api/v1/auth/verify-email",
         "/api/v1/billing/webhook",
+        "/api/v1/team",
+        "/api/v1/team/invite",
+        "/api/v1/team/accept",
+        "/api/v1/team/members",
     }
 )
 
@@ -90,7 +95,7 @@ def set_csrf_cookie(response: Response, token: str) -> None:
         value=token,
         max_age=60 * 60 * 24 * 7,  # 7 days
         httponly=False,  # JS MUST be able to read this
-        secure=settings.is_production,
+        secure=settings.is_production,  # Required for SameSite=None in modern browsers
         samesite="none" if settings.is_production else "lax",
         path="/",
     )
@@ -103,6 +108,20 @@ class CSRFMiddleware(BaseHTTPMiddleware):
     malicious request can't even reach the auth check.
     """
 
+    @staticmethod
+    def _is_gateway_admin_path(path: str) -> bool:
+        """Check if path is a gateway admin endpoint (JWT-protected, no CSRF needed).
+
+        Matches: /api/v1/servers/{uuid}/{pause,resume,connect,connect/test,deploy}
+        """
+        parts = path.strip("/").split("/")
+        if len(parts) < 5:
+            return False
+        if parts[:3] != ["api", "v1", "servers"]:
+            return False
+        action = "/".join(parts[4:])  # everything after the UUID
+        return action in ("pause", "resume", "connect", "connect/test", "deploy")
+
     async def dispatch(self, request: Request, call_next):  # type: ignore[no-untyped-def]
         if request.method in SAFE_METHODS:
             return await call_next(request)
@@ -110,7 +129,14 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         if request.url.path.startswith("/mcp/") or request.url.path.startswith("/ws/"):
             return await call_next(request)
+        # Gateway admin endpoints (JWT-authenticated, not browser forms).
+        if self._is_gateway_admin_path(request.url.path):
+            return await call_next(request)
         if not settings.is_production and settings.ENVIRONMENT == "testing":
+            return await call_next(request)
+        # API key auth — no CSRF needed (the key itself is the auth credential).
+        auth = request.headers.get("authorization", "")
+        if auth.lower().startswith("bearer mcpforge_live_"):
             return await call_next(request)
 
         cookie_token = request.cookies.get(CSRF_COOKIE_NAME)

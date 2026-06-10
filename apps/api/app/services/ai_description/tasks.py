@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -53,7 +53,7 @@ async def _enhance_async(
             server.original_tools_config = deepcopy(server.tools_config)
 
         server.description_review_status = "in_progress"
-        server.last_ai_run_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        server.last_ai_run_at = datetime.now(UTC).replace(tzinfo=None)
 
         total_tools = len(tools_to_enhance)
 
@@ -76,7 +76,9 @@ async def _enhance_async(
                     await sse_manager.publish(server_id, {
                         "event": "tool_enhanced", "server_id": server_id,
                         "tool_name": tool.get("name", ""),
-                        "quality_score": quality.get("total", 0) if isinstance(quality, dict) else 0,
+                        "quality_score": (
+                            quality.get("total", 0) if isinstance(quality, dict) else 0
+                        ),
                         "cost_cents": result.get("cost_cents", 0),
                     })
                     return result
@@ -85,7 +87,12 @@ async def _enhance_async(
                         "event": "tool_failed", "server_id": server_id,
                         "tool_name": tool.get("name", ""), "error": str(e),
                     })
-                    logger.error("ai_enhance_tool_failed", server_id=server_id, tool_name=tool.get("name"), error=str(e))
+                    logger.error(
+                        "ai_enhance_tool_failed",
+                        server_id=server_id,
+                        tool_name=tool.get("name"),
+                        error=str(e),
+                    )
                     return None
 
         tasks = [_enhance_one(t, i) for i, t in enumerate(tools_to_enhance)]
@@ -96,12 +103,16 @@ async def _enhance_async(
 
         for result in successful:
             t_name = result.get("name", "")
-            for i, t in enumerate(server.tools_config.get("tools", [])):
+            for _i, t in enumerate(server.tools_config.get("tools", [])):
                 if t.get("name") == t_name:
                     t.update({
                         "enhanced_name": result.get("enhanced_name"),
-                        "enhanced_description": result.get("enhanced_description", t.get("description", "")),
-                        "enhanced_parameters": result.get("enhanced_parameters", result.get("parameters", [])),
+                        "enhanced_description": result.get(
+                            "enhanced_description", t.get("description", "")
+                        ),
+                        "enhanced_parameters": result.get(
+                            "enhanced_parameters", result.get("parameters", [])
+                        ),
                         "enhanced_return_description": result.get("enhanced_return_description"),
                         "quality_score": result.get("quality_score", {}),
                         "improvements_made": result.get("improvements", []),
@@ -151,8 +162,18 @@ async def _enhance_async(
         "progress": 100,
     })
 
-    logger.info("ai_enhance_complete", server_id=server_id, enhanced=len(successful), failed=total_tools - len(successful), cost_cents=total_cost)
-    return {"enhanced": len(successful), "failed": total_tools - len(successful), "total_cost_cents": total_cost}
+    logger.info(
+        "ai_enhance_complete",
+        server_id=server_id,
+        enhanced=len(successful),
+        failed=total_tools - len(successful),
+        cost_cents=total_cost,
+    )
+    return {
+        "enhanced": len(successful),
+        "failed": total_tools - len(successful),
+        "total_cost_cents": total_cost,
+    }
 
 
 @celery_app.task(

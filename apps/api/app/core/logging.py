@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import logging
 import re
+import sys
 from collections.abc import MutableMapping
 from typing import Any
 
@@ -112,9 +113,12 @@ def setup_logging() -> None:
         cache_logger_on_first_use=True,
     )
 
-    # Root logger
     root_logger = logging.getLogger()
     root_logger.setLevel(settings.LOG_LEVEL.upper())
+    if not root_logger.handlers:
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.setLevel(settings.LOG_LEVEL.upper())
+        root_logger.addHandler(stdout_handler)
 
     for name in ("uvicorn.access", "uvicorn.error", "sqlalchemy.engine"):
         logging.getLogger(name).setLevel(logging.WARNING)

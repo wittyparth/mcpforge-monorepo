@@ -28,6 +28,8 @@ celery_app = Celery(
     include=[
         "app.services.ai_description.tasks",
         "app.services.auth.tasks",
+        "app.services.security_scanner.tasks",
+        "app.services.analytics.tasks",
     ],
 )
 
@@ -41,6 +43,7 @@ celery_app.conf.update(
     task_acks_late=True,
     worker_prefetch_multiplier=1,
     task_reject_on_worker_lost=True,
+    broker_connection_retry_on_startup=True,
     task_default_queue="default",
     task_routes={
         "app.services.ai_description.tasks.*": {"queue": "ai"},
@@ -58,6 +61,14 @@ celery_app.conf.update(
         "create-tool-call-partitions": {
             "task": "app.services.analytics.tasks.create_partitions",
             "schedule": crontab(hour=0, minute=30),
+        },
+        "aggregate-hourly": {
+            "task": "app.services.analytics.tasks.aggregate_hourly",
+            "schedule": crontab(minute=5),
+        },
+        "cleanup-old-partitions": {
+            "task": "app.services.analytics.tasks.cleanup_old_partitions",
+            "schedule": crontab(hour=3, minute=0, day_of_week=0),
         },
         "cleanup-revoked-tokens": {
             "task": "app.services.auth.tasks.cleanup_revoked_tokens",
