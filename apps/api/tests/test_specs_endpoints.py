@@ -178,16 +178,16 @@ def _fix_tool_serializer(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def mock_r2(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
-    """Monkeypatch R2Client in the specs module so no env vars are needed.
+def mock_s3(monkeypatch: pytest.MonkeyPatch) -> MagicMock:
+    """Monkeypatch S3Client in the specs module so no env vars are needed.
 
-    Every ``R2Client()`` call inside the endpoint returns this mock.
+    Every ``S3Client()`` call inside the endpoint returns this mock.
     """
     mock = MagicMock()
     mock.put_object = AsyncMock()
     mock.get_object = AsyncMock(return_value=b"{}")
     mock.delete_object = AsyncMock()
-    monkeypatch.setattr("app.api.v1.endpoints.specs.R2Client", lambda: mock)
+    monkeypatch.setattr("app.api.v1.endpoints.specs.S3Client", lambda: mock)
     return mock
 
 
@@ -205,7 +205,7 @@ async def other_user(test_session: AsyncSession) -> User:
 
 @pytest_asyncio.fixture
 async def sample_spec(test_session: AsyncSession, auth_user: User) -> SpecSource:
-    """A ``SpecSource`` owned by ``auth_user`` with R2 content set."""
+    """A ``SpecSource`` owned by ``auth_user`` with S3 content set."""
     spec = SpecSource(
         user_id=auth_user.id,
         source_type="url",
@@ -234,7 +234,7 @@ class TestFetchSpec:
     async def test_fetch_spec_returns_tools(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
     ) -> None:
         """A valid 5-endpoint spec returns extracted tools in the response."""
         with respx.mock:
@@ -256,13 +256,13 @@ class TestFetchSpec:
         assert len(data["tools"]) == 5
         # spec_id should be a valid UUID
         assert UUID(data["spec_id"])
-        # R2 put_object should have been called during storage
-        mock_r2.put_object.assert_awaited()
+        # S3 put_object should have been called during storage
+        mock_s3.put_object.assert_awaited()
 
     async def test_fetch_spec_invalid_url_returns_400(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
     ) -> None:
         """A loopback URL fails SSRF prevention and returns 400."""
         response = await auth_client.post(
@@ -286,7 +286,7 @@ class TestUploadSpec:
     async def test_upload_spec_returns_tools(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
     ) -> None:
         """A valid spec file upload returns 201 with extracted tools."""
         content = json.dumps(VALID_SPEC).encode()
@@ -301,12 +301,12 @@ class TestUploadSpec:
         assert len(data["tools"]) >= 1
         assert data["tools"][0]["name"] == "listItems"
         assert UUID(data["spec_id"])
-        mock_r2.put_object.assert_awaited()
+        mock_s3.put_object.assert_awaited()
 
     async def test_upload_spec_too_large_returns_413(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
     ) -> None:
         """A file exceeding 5 MB returns 413 with SPEC_TOO_LARGE."""
         large_content = b"x" * 6_000_000  # ~6 MB > 5 MB max
@@ -331,11 +331,11 @@ class TestGetSpecTools:
     async def test_get_spec_tools_returns_extracted_tools(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
         sample_spec: SpecSource,
     ) -> None:
-        """Tools are extracted from the R2-stored spec content."""
-        mock_r2.get_object.return_value = json.dumps(VALID_SPEC).encode()
+        """Tools are extracted from the S3-stored spec content."""
+        mock_s3.get_object.return_value = json.dumps(VALID_SPEC).encode()
 
         response = await auth_client.get(
             f"{BASE_URL}/{sample_spec.id}/tools",
@@ -350,7 +350,7 @@ class TestGetSpecTools:
     async def test_get_spec_tools_other_user_forbidden(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
         test_session: AsyncSession,
         other_user: User,
     ) -> None:
@@ -375,7 +375,7 @@ class TestGetSpecTools:
     async def test_get_spec_tools_not_found(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
     ) -> None:
         """A non-existent spec ID returns 404 NOT_FOUND."""
         response = await auth_client.get(
@@ -397,7 +397,7 @@ class TestGetSpec:
     async def test_get_spec_returns_metadata(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
         sample_spec: SpecSource,
     ) -> None:
         """All ``SpecSourceResponse`` fields match the created record."""
@@ -423,7 +423,7 @@ class TestGetSpec:
     async def test_get_spec_other_user_forbidden(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
         test_session: AsyncSession,
         other_user: User,
     ) -> None:
@@ -447,7 +447,7 @@ class TestGetSpec:
     async def test_get_spec_not_found(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
     ) -> None:
         """A non-existent spec ID returns 404 NOT_FOUND."""
         response = await auth_client.get(
@@ -469,17 +469,17 @@ class TestDeleteSpec:
     async def test_delete_spec_removes_row(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
         sample_spec: SpecSource,
         test_session: AsyncSession,
     ) -> None:
-        """Deleting a spec returns 204, removes the DB row, and calls R2 delete."""
+        """Deleting a spec returns 204, removes the DB row, and calls S3 delete."""
         response = await auth_client.delete(
             f"{BASE_URL}/{sample_spec.id}",
         )
 
         assert response.status_code == 204
-        mock_r2.delete_object.assert_awaited_once_with(sample_spec.r2_key)
+        mock_s3.delete_object.assert_awaited_once_with(sample_spec.r2_key)
 
         # Verify the row is gone
         repo = SpecRepository(test_session)
@@ -488,7 +488,7 @@ class TestDeleteSpec:
     async def test_delete_spec_other_user_forbidden(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
         test_session: AsyncSession,
         other_user: User,
     ) -> None:
@@ -513,7 +513,7 @@ class TestDeleteSpec:
     async def test_delete_spec_not_found(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
     ) -> None:
         """Deleting a non-existent spec returns 404."""
         response = await auth_client.delete(
@@ -535,11 +535,11 @@ class TestSelectTools:
     async def test_select_tools_creates_mcp_server(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
         sample_spec: SpecSource,
     ) -> None:
         """Selecting tools creates an MCP server with the selected tool."""
-        mock_r2.get_object.return_value = json.dumps(VALID_SPEC).encode()
+        mock_s3.get_object.return_value = json.dumps(VALID_SPEC).encode()
 
         response = await auth_client.post(
             f"{BASE_URL}/{sample_spec.id}/select-tools",
@@ -565,7 +565,7 @@ class TestSelectTools:
     async def test_select_tools_unauthorized_for_other_user(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
         test_session: AsyncSession,
         other_user: User,
     ) -> None:
@@ -598,7 +598,7 @@ class TestSelectTools:
     async def test_select_tools_not_found(
         self,
         auth_client: AsyncClient,
-        mock_r2: MagicMock,
+        mock_s3: MagicMock,
     ) -> None:
         """A non-existent spec ID returns 404."""
         response = await auth_client.post(

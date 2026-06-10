@@ -1,8 +1,8 @@
 """Spec source model (F1 — OpenAPI ingestion).
 
 A `SpecSource` records a fetched or uploaded OpenAPI document. The raw
-spec is stored in Cloudflare R2 (S3-compatible); the DB row holds
-metadata + the R2 key. Parsing happens on demand, not at insert time.
+spec is stored in AWS S3; the DB row holds
+metadata + the S3 object key. Parsing happens on demand, not at insert time.
 """
 
 from __future__ import annotations

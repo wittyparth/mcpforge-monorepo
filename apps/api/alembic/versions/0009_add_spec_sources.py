@@ -1,8 +1,8 @@
 """Add spec_sources table for OpenAPI ingestion (F1).
 
 spec_sources is a record of a fetched/uploaded spec, with the parsed
-content stored in R2 (Cloudflare R2, S3-compatible). The DB row holds
-the R2 key plus metadata. The actual `mcp_servers.tools_config` is
+content stored in AWS S3. The DB row holds
+the S3 object key plus metadata. The actual `mcp_servers.tools_config` is
 generated from spec_sources + the user's tool selection.
 
 Revision ID: 0009

@@ -7,7 +7,7 @@ This service is the entry point for all OpenAPI ingestion. It handles:
 - Parsing JSON/YAML content
 - Validating against OpenAPI 3.0+ schema
 - De-duplicating by SHA-256 hash
-- Storing in R2 and persisting metadata in Postgres
+- Storing in S3 and persisting metadata in Postgres
 - Delegating to SpecAnalyzer for tool extraction
 """
 
@@ -38,7 +38,7 @@ from app.core.exceptions import (
     UpstreamError,
 )
 from app.core.logging import get_logger
-from app.core.r2_client import R2Client
+from app.core.s3_client import S3Client
 from app.repositories.spec_repo import SpecRepository
 from app.schemas.openapi_spec import SpecUploadResponse, ToolDefinition
 
@@ -78,7 +78,7 @@ class OpenAPIFetcher:
     singletons.
 
     Attributes:
-        r2: Client for Cloudflare R2 (S3-compatible object storage).
+        s3: Client for AWS S3 object storage.
         repo: Repository for spec metadata persistence.
         analyzer: SpecAnalyzer-compatible instance for tool extraction.
         max_size: Maximum allowed spec size in bytes (from settings).
@@ -87,18 +87,18 @@ class OpenAPIFetcher:
 
     def __init__(
         self,
-        r2: R2Client,
+        s3: S3Client,
         spec_repo: SpecRepository,
         analyzer: SpecAnalyzer,
     ) -> None:
         """Initialize the fetcher with all dependencies.
 
         Args:
-            r2: Configured R2 client instance.
+            s3: Configured S3 client instance.
             spec_repo: Spec source repository for DB operations.
             analyzer: SpecAnalyzer for extracting tool definitions.
         """
-        self.r2 = r2
+        self.s3 = s3
         self.repo = spec_repo
         self.analyzer = analyzer
         self.max_size = settings.MAX_SPEC_SIZE_BYTES
@@ -118,7 +118,7 @@ class OpenAPIFetcher:
             3. Content size check against ``MAX_SPEC_SIZE_BYTES``
             4. Parse (JSON/YAML auto-detect) and validate against schema
             5. SHA-256 dedup across the same user's specs
-            6. Store in R2 (unless dedup hit)
+            6. Store in S3 (unless dedup hit)
             7. Persist metadata in Postgres
             8. Delegate to ``SpecAnalyzer.extract_tools()``
 
@@ -221,9 +221,9 @@ class OpenAPIFetcher:
         # 8. Count endpoints
         endpoint_count = self._count_endpoints(spec_dict)
 
-        # 9. Store in R2
+        # 9. Store in S3
         r2_key = f"{user_id}/{sha}.json"
-        await self.r2.put_object(r2_key, content)
+        await self.s3.put_object(r2_key, json.dumps(spec_dict, indent=2).encode("utf-8"))
 
         # 10. Persist metadata
         spec = await self.repo.create(
@@ -329,9 +329,9 @@ class OpenAPIFetcher:
         # 6. Count endpoints
         endpoint_count = self._count_endpoints(spec_dict)
 
-        # 7. Store in R2
+        # 7. Store in S3
         r2_key = f"{user_id}/{sha}.json"
-        await self.r2.put_object(r2_key, file_content)
+        await self.s3.put_object(r2_key, json.dumps(spec_dict, indent=2).encode("utf-8"))
 
         # 8. Persist metadata
         spec = await self.repo.create(
@@ -382,9 +382,9 @@ class OpenAPIFetcher:
         source_identifier: str,
         start: float,
     ) -> SpecUploadResponse:
-        """Handle a dedup hit: re-analyse existing R2 content.
+        """Handle a dedup hit: re-analyse existing S3 content.
 
-        Does NOT store the spec again. Fetches the original bytes from R2,
+        Does NOT store the spec again. Fetches the original bytes from S3,
         re-parses, and re-extracts tools.
 
         Args:
@@ -396,11 +396,13 @@ class OpenAPIFetcher:
         Returns:
             A ``SpecUploadResponse`` built from the existing record.
         """
-        existing_content = await self.r2.get_object(existing.r2_key)
+        existing_content = await self.s3.get_object(existing.r2_key)
         if not existing_content:
-            # R2 not available (dev mode) — re-parse from freshly fetched bytes
-            existing_spec = self._parse_content(content, "application/json")
-            existing_content = content
+            stripped = content.lstrip(b" \t\n\r\xef\xbb\xbf")
+            content_type = "application/json" if stripped[:1] == b"{" else "application/x-yaml"
+            existing_spec = self._parse_content(content, content_type)
+            existing_content = json.dumps(existing_spec, indent=2).encode("utf-8")
+            await self.s3.put_object(existing.r2_key, existing_content)
         else:
             existing_spec = self._parse_content(existing_content, "application/json")
         tools = await self.analyzer.extract_tools(existing_spec)

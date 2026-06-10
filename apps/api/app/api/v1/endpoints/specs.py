@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user, get_db
 from app.core.exceptions import ForbiddenError, NotFoundError, UpstreamError
 from app.core.logging import get_logger
-from app.core.r2_client import R2Client
+from app.core.s3_client import S3Client
 from app.models.user import User
 from app.repositories.spec_repo import SpecRepository
 from app.schemas.mcp_server import MCPServerResponse, ToolSelectionRequest
@@ -59,8 +59,8 @@ class _AsyncSpecAnalyzer:
         return self._inner.extract_tools(spec_dict)
 
 
-class _NoopR2Client:
-    """In-memory R2 client for development without R2 infrastructure.
+class _NoopS3Client:
+    """In-memory S3 client for development without S3 infrastructure.
 
     Stores spec content in a process-local dict so tools, select-tools,
     and delete operations all work correctly during development.
@@ -72,32 +72,32 @@ class _NoopR2Client:
 
     async def put_object(self, key: str, body: bytes) -> None:
         self._store[key] = body
-        logger.info("r2_dev_stored", key=key, bytes=len(body))
+        logger.info("s3_dev_stored", key=key, bytes=len(body))
 
     async def get_object(self, key: str) -> bytes:
         content = self._store.get(key)
         if content is None:
-            logger.warning("r2_dev_miss", key=key)
+            logger.warning("s3_dev_miss", key=key)
         return content or b""
 
     async def delete_object(self, key: str) -> None:
         self._store.pop(key, None)
-        logger.info("r2_dev_deleted", key=key)
+        logger.info("s3_dev_deleted", key=key)
 
 
-def _build_r2() -> R2Client:
-    """Return a configured R2 client, falling back to a no-op in dev."""
+def _build_s3() -> S3Client:
+    """Return a configured S3 client, falling back to a no-op in dev."""
     try:
-        return R2Client()
+        return S3Client()
     except RuntimeError:
-        logger.info("r2_not_configured_using_noop_client")
-        return _NoopR2Client()  # type: ignore[return-value]
+        logger.info("s3_not_configured_using_noop_client")
+        return _NoopS3Client()  # type: ignore[return-value]
 
 
 def _build_fetcher(session: AsyncSession) -> OpenAPIFetcher:
     """Construct an OpenAPIFetcher with all required dependencies."""
     return OpenAPIFetcher(
-        r2=_build_r2(),
+        s3=_build_s3(),
         spec_repo=SpecRepository(session),
         analyzer=_AsyncSpecAnalyzer(),
     )
@@ -112,7 +112,7 @@ async def fetch_spec(
     """Fetch an OpenAPI spec from a URL, parse, validate, and return extracted tools.
 
     The spec is downloaded from the provided URL, validated against OpenAPI 3.0+,
-    stored in Cloudflare R2, and analyzed for MCP tool definitions.
+    stored in AWS S3, and analyzed for MCP tool definitions.
     """
     logger.info("fetch_spec_started", url=body.url, user_id=str(current_user.id))
     fetcher = _build_fetcher(session)
@@ -134,7 +134,7 @@ async def upload_spec(
     """Upload an OpenAPI spec file (multipart, JSON or YAML, ≤5MB).
 
     The uploaded file is parsed, validated against OpenAPI 3.0+, stored in
-    Cloudflare R2, and analyzed for MCP tool definitions.
+    AWS S3, and analyzed for MCP tool definitions.
     """
     content = await file.read()
     filename = file.filename or "spec.yaml"
@@ -162,7 +162,7 @@ async def get_spec_tools(
 ) -> SpecToolListResponse:
     """Get the parsed list of MCP tools extracted from a spec.
 
-    Fetches the spec content from Cloudflare R2, re-parses it, and extracts
+    Fetches the spec content from AWS S3, re-parses it, and extracts
     tool definitions. Verifies the requesting user owns the spec.
     """
     repo = SpecRepository(session)
@@ -174,10 +174,10 @@ async def get_spec_tools(
     if not spec.r2_key:
         raise NotFoundError("Spec has no stored content")
 
-    r2 = _build_r2()
-    content = await r2.get_object(spec.r2_key)
+    s3 = _build_s3()
+    content = await s3.get_object(spec.r2_key)
     if not content:
-        raise NotFoundError("Spec content not available (R2 not configured)")
+        raise NotFoundError("Spec content not available (S3 not configured)")
     spec_dict: dict[str, Any] = json.loads(content)
 
     analyzer = SpecAnalyzer()
@@ -204,7 +204,7 @@ async def select_tools(
 ) -> MCPServerResponse:
     """Select tools from a spec and create a new MCP server.
 
-    Re-parses the spec from R2, applies the user's tool selection and
+    Re-parses the spec from S3, applies the user's tool selection and
     customizations, generates the MCP tools configuration, and creates
     a new MCPServer with that configuration.
     """
@@ -217,11 +217,11 @@ async def select_tools(
     if not spec.r2_key:
         raise NotFoundError("Spec has no stored content")
 
-    # Re-parse spec from R2 for a fresh analysis
-    r2 = _build_r2()
-    content = await r2.get_object(spec.r2_key)
+    # Re-parse spec from S3 for a fresh analysis
+    s3 = _build_s3()
+    content = await s3.get_object(spec.r2_key)
     if not content:
-        raise NotFoundError("Spec content not available (R2 not configured)")
+        raise NotFoundError("Spec content not available (S3 not configured)")
     spec_dict: dict[str, Any] = json.loads(content)
 
     # Extract all tools and apply user selection
@@ -306,7 +306,7 @@ async def delete_spec(
 ) -> None:
     """Delete a spec and its stored content.
 
-    Deletes the spec content from Cloudflare R2 (best-effort — if the R2
+    Deletes the spec content from AWS S3 (best-effort — if the S3
     object is missing, we log a warning and continue) and removes the
     metadata row from the database.
     """
@@ -317,21 +317,21 @@ async def delete_spec(
     if spec.user_id != current_user.id:
         raise ForbiddenError("You do not own this spec")
 
-    # Best-effort R2 delete
+    # Best-effort S3 delete
     if spec.r2_key:
         try:
-            r2 = _build_r2()
-            await r2.delete_object(spec.r2_key)
+            s3 = _build_s3()
+            await s3.delete_object(spec.r2_key)
         except RuntimeError:
             logger.warning(
-                "spec_delete_r2_not_configured",
+                "spec_delete_s3_not_configured",
                 spec_id=str(spec.id),
             )
         except UpstreamError:
             logger.warning(
-                "spec_delete_r2_failed_continuing",
+                "spec_delete_s3_failed_continuing",
                 spec_id=str(spec.id),
-                r2_key=spec.r2_key,
+                s3_key=spec.r2_key,
             )
 
     await repo.delete(spec)

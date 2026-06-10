@@ -74,6 +74,9 @@ class Settings(BaseSettings):
     LLM_PROMPT_CACHING_ENABLED: bool = True
     LLM_JSON_MODE: bool = True
 
+    # Application URL (used in email links, redirects)
+    APP_URL: str = "http://localhost:3000"
+
     # Email (Resend, Phase 1.1)
     EMAIL_PROVIDER_API_KEY: str = ""
     EMAIL_FROM_ADDRESS: str = "noreply@mcpforge.io"
@@ -82,17 +85,24 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_LITIGATED_MODE: bool = False
+    STRIPE_PRICE_PRO_MONTHLY: str = ""
+    STRIPE_PRICE_PRO_YEARLY: str = ""
+    STRIPE_PRICE_TEAM_SEAT_MONTHLY: str = ""
+    FRONTEND_URL: str = "http://localhost:3000"
 
-    # Cloudflare R2 (S3-compatible, F1 spec storage)
-    R2_BUCKET: str = ""
-    R2_ACCESS_KEY_ID: str = ""
-    R2_SECRET_ACCESS_KEY: str = ""
-    R2_ACCOUNT_ID: str = ""
-    R2_ENDPOINT_URL: str = ""
+    # AWS S3 (object storage for OpenAPI specs and other files)
+    AWS_S3_BUCKET: str = ""
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = "us-east-1"
+    AWS_S3_ENDPOINT_URL: str = ""  # Optional: for S3-compatible services
 
     # Sentry
     SENTRY_DSN: str = ""
     SENTRY_TRACES_SAMPLE_RATE: float = 0.1
+
+    # API keys (F7)
+    MAX_API_KEYS_PER_USER: int = 5
 
     # Cost guardrails
     MAX_AI_CREDITS_PER_USER_PER_DAY: int = 100
@@ -152,15 +162,6 @@ class Settings(BaseSettings):
     @property
     def is_development(self) -> bool:
         return self.ENVIRONMENT == "development"
-
-    @property
-    def r2_endpoint(self) -> str:
-        """Derive R2 endpoint from account_id if not explicitly set."""
-        if self.R2_ENDPOINT_URL:
-            return self.R2_ENDPOINT_URL
-        if self.R2_ACCOUNT_ID:
-            return f"https://{self.R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
-        return ""
 
     @property
     def sentry_sample_rate(self) -> float:

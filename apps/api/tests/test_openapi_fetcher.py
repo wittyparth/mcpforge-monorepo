@@ -1,7 +1,7 @@
 """Tests for OpenAPIFetcher service (F1 — OpenAPI ingestion).
 
 Uses ``respx`` to mock HTTP responses at the transport layer,
-``unittest.mock.AsyncMock`` for all other dependencies (R2Client,
+``unittest.mock.AsyncMock`` for all other dependencies (S3Client,
 SpecRepository, SpecAnalyzer).
 
 Test matrix (10 tests):
@@ -14,7 +14,7 @@ Test matrix (10 tests):
   7. fetch_from_url: invalid spec (missing required fields) raises ``SpecValidationError``
   8. fetch_from_url: Swagger 2.0 raises ``UnsupportedSpecVersionError``
   9. fetch_from_url: dedup hit reuses existing spec, skips ``put_object``
-  10. upload: file bytes parsed, deduped, stored in R2
+  10. upload: file bytes parsed, deduped, stored in S3
 """
 
 from __future__ import annotations
@@ -88,7 +88,7 @@ def user_id() -> UUID:
 
 
 @pytest.fixture
-def mock_r2() -> AsyncMock:
+def mock_s3() -> AsyncMock:
     return AsyncMock()
 
 
@@ -105,7 +105,7 @@ def mock_analyzer() -> AsyncMock:
 
 
 @pytest.fixture
-def fetcher(mock_r2: AsyncMock, mock_spec_repo: AsyncMock, mock_analyzer: AsyncMock):
+def fetcher(mock_s3: AsyncMock, mock_spec_repo: AsyncMock, mock_analyzer: AsyncMock):
     """Build an OpenAPIFetcher with all dependencies mocked.
 
     Must be imported inside the fixture to avoid circular/early import
@@ -113,7 +113,7 @@ def fetcher(mock_r2: AsyncMock, mock_spec_repo: AsyncMock, mock_analyzer: AsyncM
     """
     from app.services.openapi_fetcher import OpenAPIFetcher
 
-    return OpenAPIFetcher(r2=mock_r2, spec_repo=mock_spec_repo, analyzer=mock_analyzer)
+    return OpenAPIFetcher(s3=mock_s3, spec_repo=mock_spec_repo, analyzer=mock_analyzer)
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────────
@@ -132,7 +132,7 @@ def _spec_url() -> str:
 async def test_fetch_from_url_valid(
     fetcher: Any,
     user_id: UUID,
-    mock_r2: AsyncMock,
+    mock_s3: AsyncMock,
     mock_spec_repo: AsyncMock,
     mock_analyzer: AsyncMock,
 ) -> None:
@@ -162,7 +162,7 @@ async def test_fetch_from_url_valid(
     assert len(result.tools) == 1
     assert result.tools[0].name == "listUsers"
 
-    mock_r2.put_object.assert_awaited_once()
+    mock_s3.put_object.assert_awaited_once()
     mock_spec_repo.create.assert_awaited_once()
     mock_analyzer.extract_tools.assert_awaited_once()
 
@@ -345,7 +345,7 @@ async def test_fetch_from_url_swagger(
 async def test_fetch_from_url_dedup(
     fetcher: Any,
     user_id: UUID,
-    mock_r2: AsyncMock,
+    mock_s3: AsyncMock,
     mock_spec_repo: AsyncMock,
     mock_analyzer: AsyncMock,
 ) -> None:
@@ -366,7 +366,7 @@ async def test_fetch_from_url_dedup(
     # get_by_user_and_hash returns the existing spec
     mock_spec_repo.get_by_user_and_hash.return_value = existing_spec
     # get_object returns the original content
-    mock_r2.get_object.return_value = body
+    mock_s3.get_object.return_value = body
 
     with respx.mock:
         respx.get(url).respond(
@@ -376,10 +376,10 @@ async def test_fetch_from_url_dedup(
         result = await fetcher.fetch_from_url(user_id, url, {})
 
     # Should NOT have stored a new object or created a new DB row
-    mock_r2.put_object.assert_not_awaited()
+    mock_s3.put_object.assert_not_awaited()
     mock_spec_repo.create.assert_not_awaited()
     # Should have fetched the existing content and re-analyzed
-    mock_r2.get_object.assert_awaited_once_with(existing_spec.r2_key)
+    mock_s3.get_object.assert_awaited_once_with(existing_spec.r2_key)
     mock_analyzer.extract_tools.assert_awaited_once()
 
     assert result.spec_id == spec_id
@@ -396,11 +396,11 @@ async def test_fetch_from_url_dedup(
 async def test_upload_file_content(
     fetcher: Any,
     user_id: UUID,
-    mock_r2: AsyncMock,
+    mock_s3: AsyncMock,
     mock_spec_repo: AsyncMock,
     mock_analyzer: AsyncMock,
 ) -> None:
-    """Uploaded file content is parsed, stored in R2, and tools extracted."""
+    """Uploaded file content is parsed, stored in S3, and tools extracted."""
     body = json.dumps(VALID_SPEC).encode()
     filename = "api-spec.json"
 
@@ -421,6 +421,6 @@ async def test_upload_file_content(
     assert result.spec_size_bytes == len(body)
     assert len(result.tools) == 1
 
-    mock_r2.put_object.assert_awaited_once()
+    mock_s3.put_object.assert_awaited_once()
     mock_spec_repo.create.assert_awaited_once()
     mock_analyzer.extract_tools.assert_awaited_once()
