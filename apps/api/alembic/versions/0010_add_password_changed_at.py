@@ -1,14 +1,9 @@
-"""Add password_changed_at and last_login_at columns to users table.
+"""Collision guard: password_changed_at and last_login_at.
 
-These columns are defined in the User SQLAlchemy model (Wave 0 hardening)
-but were omitted from migration 0007 (which added stripe_customer_id but
-not these). If the DB was created with the original 0007, those columns
-don't exist and queries fail with UndefinedColumnError.
-
-This migration can be safely applied regardless of whether the columns
-already exist (IF NOT EXISTS would be ideal, but Alembic/PostgreSQL
-don't support that for columns — running this twice will fail on the
-first duplicate column error; check alembic_version before running).
+These columns are ALREADY added by migration 0007 (which includes
+the billing model). Migration 0010 was created on a branch where
+0007 didn't have them. This is a no-op in production but exists
+to allow `alembic upgrade head` to pass without errors.
 
 Revision ID: 0010
 Revises: 0009
@@ -17,10 +12,6 @@ Create Date: 2026-06-07 00:00:00.000000
 
 from collections.abc import Sequence
 
-import sqlalchemy as sa
-
-from alembic import op
-
 revision: str = "0010"
 down_revision: str | None = "0009"
 branch_labels: str | Sequence[str] | None = None
@@ -28,16 +19,11 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column(
-        "users",
-        sa.Column("password_changed_at", sa.DateTime(timezone=True), nullable=True),
-    )
-    op.add_column(
-        "users",
-        sa.Column("last_login_at", sa.DateTime(timezone=True), nullable=True),
-    )
+    # Columns already exist from 0007_add_billing.py — skip to avoid
+    # DuplicateColumnError on production.
+    pass
 
 
 def downgrade() -> None:
-    op.drop_column("users", "last_login_at")
-    op.drop_column("users", "password_changed_at")
+    # Columns are managed by 0007; nothing extra to undo here.
+    pass
