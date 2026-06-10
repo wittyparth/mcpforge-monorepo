@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.models.mcp_server import MCPServer
 from app.models.user import User
+from app.repositories.mcp_server_repo import MCPServerRepository
 
 # Disable CSRF for testing — the middleware only bypasses CSRF when
 # settings.ENVIRONMENT == "testing".  All state-changing endpoint tests
@@ -134,16 +135,39 @@ class TestEnhanceTools:
     """POST /api/v1/servers/{server_id}/tools/enhance."""
 
     @pytest.mark.asyncio
-    async def test_enhance_tools_returns_501(
+    async def test_enhance_tools_starts_job(
         self,
         auth_client: AsyncClient,
-        server: MCPServer,
+        auth_user: User,
+        test_session: AsyncSession,
     ) -> None:
-        """Enhance tools endpoint returns 501 (F2 stub)."""
+        """Enhance tools endpoint kicks off a Celery job (200)."""
+        repo = MCPServerRepository(test_session)
+        server = await repo.create(
+            user_id=auth_user.id,
+            slug=f"enhance-{uuid.uuid4().hex[:8]}",
+            name="Enhance Test",
+            base_url="https://api.example.com",
+            tools_config={
+                "tools": [
+                    {
+                        "name": "ping",
+                        "description": "A test tool",
+                        "method": "GET",
+                        "path": "/ping",
+                    }
+                ]
+            },
+        )
+
         response = await auth_client.post(
             f"{TOOLS_URL}/{server.id}/tools/enhance",
+            json={"tool_names": None, "force": False},
         )
-        assert response.status_code == 501
+        # F2 is shipped — the enhance endpoint is real. When the server
+        # has tools it starts a Celery job and returns 200 with job_id.
+        assert response.status_code == 200, (
+            f"Unexpected {response.status_code}: {response.text[:200]}"
+        )
         data = response.json()
-        assert data["error"]["code"] == "NOT_IMPLEMENTED"
-        assert "pending F2" in data["error"]["message"]
+        assert "job_id" in data

@@ -6,8 +6,6 @@ No external dependencies needed (pure in-memory dict operations).
 
 from __future__ import annotations
 
-from datetime import UTC, datetime, timedelta
-
 import pytest
 
 from app.gateway.session import MCPSession, SessionManager

@@ -357,13 +357,15 @@ async def test_ssrf_blocked() -> None:
         "parameters": [],
     }
 
-    with patch(
-        "asyncio.get_event_loop",
-        return_value=AsyncMock(
-            getaddrinfo=AsyncMock(
-                return_value=_mock_addrinfo("192.168.1.1"),
+    with (
+        patch(
+            "asyncio.get_event_loop",
+            return_value=AsyncMock(
+                getaddrinfo=AsyncMock(
+                    return_value=_mock_addrinfo("192.168.1.1"),
+                ),
             ),
         ),
+        pytest.raises(SSRFBlockedError),
     ):
-        with pytest.raises(SSRFBlockedError):
-            await d.dispatch(server, tool, {})
+        await d.dispatch(server, tool, {})

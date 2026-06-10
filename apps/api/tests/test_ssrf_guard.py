@@ -43,19 +43,21 @@ async def test_private_ip_10_x() -> None:
     guard = SSRFGuard()
     url = "http://10.0.0.1/api"
 
-    with patch.object(
-        SSRFGuard,
-        "assert_safe",
-        wraps=guard.assert_safe,
-    ) as _spy:
-        with patch(
+    with (
+        patch.object(
+            SSRFGuard,
+            "assert_safe",
+            wraps=guard.assert_safe,
+        ) as _spy,
+        patch(
             "asyncio.get_event_loop",
             return_value=AsyncMock(
                 getaddrinfo=AsyncMock(return_value=_mock_addrinfo("10.0.0.1")),
             ),
-        ):
-            with pytest.raises(SSRFBlockedError) as exc:
-                await guard.assert_safe(url)
+        ),
+        pytest.raises(SSRFBlockedError) as exc,
+    ):
+        await guard.assert_safe(url)
 
     assert "blocked" in str(exc.value.message).lower()
 
@@ -66,14 +68,16 @@ async def test_private_ip_172_16_x() -> None:
     guard = SSRFGuard()
     url = "http://172.16.0.1/api"
 
-    with patch(
-        "asyncio.get_event_loop",
-        return_value=AsyncMock(
-            getaddrinfo=AsyncMock(return_value=_mock_addrinfo("172.16.0.1")),
+    with (
+        patch(
+            "asyncio.get_event_loop",
+            return_value=AsyncMock(
+                getaddrinfo=AsyncMock(return_value=_mock_addrinfo("172.16.0.1")),
+            ),
         ),
+        pytest.raises(SSRFBlockedError) as exc,
     ):
-        with pytest.raises(SSRFBlockedError) as exc:
-            await guard.assert_safe(url)
+        await guard.assert_safe(url)
 
     assert "blocked" in str(exc.value.message).lower()
 
@@ -84,14 +88,16 @@ async def test_private_ip_192_168_x() -> None:
     guard = SSRFGuard()
     url = "http://192.168.1.1/admin"
 
-    with patch(
-        "asyncio.get_event_loop",
-        return_value=AsyncMock(
-            getaddrinfo=AsyncMock(return_value=_mock_addrinfo("192.168.1.1")),
+    with (
+        patch(
+            "asyncio.get_event_loop",
+            return_value=AsyncMock(
+                getaddrinfo=AsyncMock(return_value=_mock_addrinfo("192.168.1.1")),
+            ),
         ),
+        pytest.raises(SSRFBlockedError) as exc,
     ):
-        with pytest.raises(SSRFBlockedError) as exc:
-            await guard.assert_safe(url)
+        await guard.assert_safe(url)
 
     assert "blocked" in str(exc.value.message).lower()
 
@@ -102,14 +108,16 @@ async def test_loopback() -> None:
     guard = SSRFGuard()
     url = "http://127.0.0.1/health"
 
-    with patch(
-        "asyncio.get_event_loop",
-        return_value=AsyncMock(
-            getaddrinfo=AsyncMock(return_value=_mock_addrinfo("127.0.0.1")),
+    with (
+        patch(
+            "asyncio.get_event_loop",
+            return_value=AsyncMock(
+                getaddrinfo=AsyncMock(return_value=_mock_addrinfo("127.0.0.1")),
+            ),
         ),
+        pytest.raises(SSRFBlockedError) as exc,
     ):
-        with pytest.raises(SSRFBlockedError) as exc:
-            await guard.assert_safe(url)
+        await guard.assert_safe(url)
 
     assert "blocked" in str(exc.value.message).lower()
 
@@ -120,16 +128,18 @@ async def test_aws_metadata() -> None:
     guard = SSRFGuard()
     url = "http://169.254.169.254/latest/meta-data"
 
-    with patch(
-        "asyncio.get_event_loop",
-        return_value=AsyncMock(
-            getaddrinfo=AsyncMock(
-                return_value=_mock_addrinfo("169.254.169.254"),
+    with (
+        patch(
+            "asyncio.get_event_loop",
+            return_value=AsyncMock(
+                getaddrinfo=AsyncMock(
+                    return_value=_mock_addrinfo("169.254.169.254"),
+                ),
             ),
         ),
+        pytest.raises(SSRFBlockedError) as exc,
     ):
-        with pytest.raises(SSRFBlockedError) as exc:
-            await guard.assert_safe(url)
+        await guard.assert_safe(url)
 
     assert "blocked" in str(exc.value.message).lower()
 
@@ -140,14 +150,16 @@ async def test_zero_ip() -> None:
     guard = SSRFGuard()
     url = "http://0.0.0.0/spec"
 
-    with patch(
-        "asyncio.get_event_loop",
-        return_value=AsyncMock(
-            getaddrinfo=AsyncMock(return_value=_mock_addrinfo("0.0.0.0")),
+    with (
+        patch(
+            "asyncio.get_event_loop",
+            return_value=AsyncMock(
+                getaddrinfo=AsyncMock(return_value=_mock_addrinfo("0.0.0.0")),
+            ),
         ),
+        pytest.raises(SSRFBlockedError) as exc,
     ):
-        with pytest.raises(SSRFBlockedError) as exc:
-            await guard.assert_safe(url)
+        await guard.assert_safe(url)
 
     assert "blocked" in str(exc.value.message).lower()
 
@@ -163,14 +175,16 @@ async def test_ipv6_loopback() -> None:
     guard = SSRFGuard()
     url = "http://[::1]/api"
 
-    with patch(
-        "asyncio.get_event_loop",
-        return_value=AsyncMock(
-            getaddrinfo=AsyncMock(return_value=_mock_addrinfo_v6("::1")),
+    with (
+        patch(
+            "asyncio.get_event_loop",
+            return_value=AsyncMock(
+                getaddrinfo=AsyncMock(return_value=_mock_addrinfo_v6("::1")),
+            ),
         ),
+        pytest.raises(SSRFBlockedError) as exc,
     ):
-        with pytest.raises(SSRFBlockedError) as exc:
-            await guard.assert_safe(url)
+        await guard.assert_safe(url)
 
     assert "blocked" in str(exc.value.message).lower()
 
@@ -181,14 +195,16 @@ async def test_ipv6_ula() -> None:
     guard = SSRFGuard()
     url = "http://[fc00::1]/api"
 
-    with patch(
-        "asyncio.get_event_loop",
-        return_value=AsyncMock(
-            getaddrinfo=AsyncMock(return_value=_mock_addrinfo_v6("fc00::1")),
+    with (
+        patch(
+            "asyncio.get_event_loop",
+            return_value=AsyncMock(
+                getaddrinfo=AsyncMock(return_value=_mock_addrinfo_v6("fc00::1")),
+            ),
         ),
+        pytest.raises(SSRFBlockedError) as exc,
     ):
-        with pytest.raises(SSRFBlockedError) as exc:
-            await guard.assert_safe(url)
+        await guard.assert_safe(url)
 
     assert "blocked" in str(exc.value.message).lower()
 
@@ -199,14 +215,16 @@ async def test_ipv6_link_local() -> None:
     guard = SSRFGuard()
     url = "http://[fe80::1]/api"
 
-    with patch(
-        "asyncio.get_event_loop",
-        return_value=AsyncMock(
-            getaddrinfo=AsyncMock(return_value=_mock_addrinfo_v6("fe80::1")),
+    with (
+        patch(
+            "asyncio.get_event_loop",
+            return_value=AsyncMock(
+                getaddrinfo=AsyncMock(return_value=_mock_addrinfo_v6("fe80::1")),
+            ),
         ),
+        pytest.raises(SSRFBlockedError) as exc,
     ):
-        with pytest.raises(SSRFBlockedError) as exc:
-            await guard.assert_safe(url)
+        await guard.assert_safe(url)
 
     assert "blocked" in str(exc.value.message).lower()
 

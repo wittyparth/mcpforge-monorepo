@@ -17,8 +17,6 @@ import uuid
 import httpx
 import pytest
 
-
-
 BASE_URL = "http://localhost:8000/api/v1"
 TIMEOUT = 30.0
 
@@ -488,54 +486,56 @@ class TestFullAIEnhancement:
         )
         timeout_val = 120.0
         deadline = time.monotonic() + timeout_val
-    
-        async with httpx.AsyncClient(timeout=TIMEOUT) as sse_client:
-            async with sse_client.stream(
+
+        async with (
+            httpx.AsyncClient(timeout=TIMEOUT) as sse_client,
+            sse_client.stream(
                 "GET",
                 sse_url,
                 **auth_headers(registered_user),
-            ) as response:
-                assert response.status_code == 200, (
-                    f"SSE failed: {response.status_code}"
-                )
-                buffer = ""
-                received_complete = False
-                try:
-                    async for chunk in response.aiter_text():
-                        if not chunk:
+            ) as response,
+        ):
+            assert response.status_code == 200, (
+                f"SSE failed: {response.status_code}"
+            )
+            buffer = ""
+            received_complete = False
+            try:
+                async for chunk in response.aiter_text():
+                    if not chunk:
+                        continue
+                    buffer += chunk
+                    while "\n\n" in buffer:
+                        event_text, buffer = buffer.split("\n\n", 1)
+                        if event_text.startswith("event:"):
+                            _event_type = event_text.split("\n")[0].replace("event:", "").strip()
+                            data_line = "\n".join(
+                                _l.replace("data:", "").strip()
+                                for _l in event_text.split("\n")
+                                if _l.startswith("data:")
+                            )
+                        elif event_text.startswith("data:"):
+                            _event_type = "message"
+                            data_line = event_text.replace("data:", "").strip()
+                        else:
                             continue
-                        buffer += chunk
-                        while "\n\n" in buffer:
-                            event_text, buffer = buffer.split("\n\n", 1)
-                            if event_text.startswith("event:"):
-                                event_type = event_text.split("\n")[0].replace("event:", "").strip()
-                                data_line = "\n".join(
-                                    l.replace("data:", "").strip()
-                                    for l in event_text.split("\n")
-                                    if l.startswith("data:")
-                                )
-                            elif event_text.startswith("data:"):
-                                event_type = "message"
-                                data_line = event_text.replace("data:", "").strip()
-                            else:
-                                continue
-    
-                            if data_line:
-                                try:
-                                    event = json.loads(data_line)
-                                    sse_events.append(event)
-                                    if event.get("event") in ("ai_complete", "done"):
-                                        received_complete = True
-                                except json.JSONDecodeError:
-                                    pass
-    
-                        if received_complete:
-                            break
-                        if time.monotonic() > deadline:
-                            break
-                except httpx.ReadTimeout:
-                    pass
-    
+
+                        if data_line:
+                            try:
+                                event = json.loads(data_line)
+                                sse_events.append(event)
+                                if event.get("event") in ("ai_complete", "done"):
+                                    received_complete = True
+                            except json.JSONDecodeError:
+                                pass
+
+                    if received_complete:
+                        break
+                    if time.monotonic() > deadline:
+                        break
+            except httpx.ReadTimeout:
+                pass
+
         assert len(sse_events) > 0, "No SSE events received"
         start_events = [e for e in sse_events if e.get("event") == "start"]
         progress_events = [e for e in sse_events if e.get("event") == "ai_progress"]
@@ -650,7 +650,10 @@ class TestFullAIEnhancement:
         tools = resp.json()["tools"]
         for tool in tools:
             if tool["name"] == "search_products":
-                print(f"  Single enhance: {tool['name']} enhanced={bool(tool.get('enhanced_description'))}")
+                print(
+                    f"  Single enhance: {tool['name']}"
+                    f" enhanced={bool(tool.get('enhanced_description'))}"
+                )
 
     async def test_enhance_and_reject(
         self, http: httpx.AsyncClient, registered_user: dict, test_server: dict
@@ -704,10 +707,12 @@ class TestFullAIEnhancement:
         server_id = test_server["id"]
         sse_url = f"http://localhost:8000/api/v1/servers/{server_id}/build-status"
 
-        async with httpx.AsyncClient(timeout=TIMEOUT) as sse_client:
-            async with sse_client.stream(
+        async with (
+            httpx.AsyncClient(timeout=TIMEOUT) as sse_client,
+            sse_client.stream(
                 "GET", sse_url, **auth_headers(registered_user)
-            ) as response:
+            ) as response,
+        ):
                 assert response.status_code == 200
                 try:
                     async for chunk in response.aiter_text():

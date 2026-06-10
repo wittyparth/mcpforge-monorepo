@@ -23,7 +23,6 @@ from fastapi import Request
 
 from app.gateway.transport_http import handle_http_request
 
-
 # ---------------------------------------------------------------------------
 # Shared test data
 # ---------------------------------------------------------------------------
@@ -136,18 +135,20 @@ class TestHandleHttpRequest:
     @pytest.mark.asyncio
     async def test_post_initialize(self) -> None:
         """POST with ``initialize`` returns capabilities and session header."""
-        with patch(
-            "app.gateway.transport_http.ServerConfigCache.get",
-            return_value=_ACTIVE_CONFIG,
-        ):
-            with patch(
+        with (
+            patch(
+                "app.gateway.transport_http.ServerConfigCache.get",
+                return_value=_ACTIVE_CONFIG,
+            ),
+            patch(
                 "app.gateway.transport_http.route_mcp_request",
                 return_value=_INIT_RESPONSE,
-            ):
-                result = await handle_http_request(
-                    slug="test-server",
-                    body={"jsonrpc": "2.0", "id": 1, "method": "initialize"},
-                )
+            ),
+        ):
+            result = await handle_http_request(
+                slug="test-server",
+                body={"jsonrpc": "2.0", "id": 1, "method": "initialize"},
+            )
 
         assert result.status_code == 200
         body_bytes = cast(bytes, result.body)
@@ -166,18 +167,20 @@ class TestHandleHttpRequest:
     @pytest.mark.asyncio
     async def test_post_tools_list(self) -> None:
         """POST with ``tools/list`` returns the tool list."""
-        with patch(
-            "app.gateway.transport_http.ServerConfigCache.get",
-            return_value=_ACTIVE_CONFIG,
-        ):
-            with patch(
+        with (
+            patch(
+                "app.gateway.transport_http.ServerConfigCache.get",
+                return_value=_ACTIVE_CONFIG,
+            ),
+            patch(
                 "app.gateway.transport_http.route_mcp_request",
                 return_value=_TOOLS_LIST_RESPONSE,
-            ):
-                result = await handle_http_request(
-                    slug="test-server",
-                    body={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
-                )
+            ),
+        ):
+            result = await handle_http_request(
+                slug="test-server",
+                body={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+            )
 
         assert result.status_code == 200
         body_bytes = cast(bytes, result.body)
@@ -194,26 +197,28 @@ class TestHandleHttpRequest:
     @pytest.mark.asyncio
     async def test_post_tools_call(self) -> None:
         """POST with ``tools/call`` returns the tool execution result."""
-        with patch(
-            "app.gateway.transport_http.ServerConfigCache.get",
-            return_value=_ACTIVE_CONFIG,
-        ):
-            with patch(
+        with (
+            patch(
+                "app.gateway.transport_http.ServerConfigCache.get",
+                return_value=_ACTIVE_CONFIG,
+            ),
+            patch(
                 "app.gateway.transport_http.route_mcp_request",
                 return_value=_TOOLS_CALL_RESPONSE,
-            ):
-                result = await handle_http_request(
-                    slug="test-server",
-                    body={
-                        "jsonrpc": "2.0",
-                        "id": 1,
-                        "method": "tools/call",
-                        "params": {
-                            "name": "echo",
-                            "arguments": {"message": "hello"},
-                        },
+            ),
+        ):
+            result = await handle_http_request(
+                slug="test-server",
+                body={
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "tools/call",
+                    "params": {
+                        "name": "echo",
+                        "arguments": {"message": "hello"},
                     },
-                )
+                },
+            )
 
         assert result.status_code == 200
         body_bytes = cast(bytes, result.body)
@@ -227,21 +232,23 @@ class TestHandleHttpRequest:
     @pytest.mark.asyncio
     async def test_notification_202(self) -> None:
         """A notification (no ``id``) returns 202 Accepted with no body."""
-        with patch(
-            "app.gateway.transport_http.ServerConfigCache.get",
-            return_value=_ACTIVE_CONFIG,
-        ):
-            with patch(
+        with (
+            patch(
+                "app.gateway.transport_http.ServerConfigCache.get",
+                return_value=_ACTIVE_CONFIG,
+            ),
+            patch(
                 "app.gateway.transport_http.route_mcp_request",
                 return_value=None,  # ← notification produces no response
-            ):
-                result = await handle_http_request(
-                    slug="test-server",
-                    body={
-                        "jsonrpc": "2.0",
-                        "method": "notifications/initialized",
-                    },
-                )
+            ),
+        ):
+            result = await handle_http_request(
+                slug="test-server",
+                body={
+                    "jsonrpc": "2.0",
+                    "method": "notifications/initialized",
+                },
+            )
 
         assert result.status_code == 202
         assert result.body == b""
@@ -270,19 +277,21 @@ class TestHandleHttpRequest:
         supplied_sid = str(uuid.uuid4())
         req = _mock_request(method="POST", session_id=supplied_sid)
 
-        with patch(
-            "app.gateway.transport_http.ServerConfigCache.get",
-            return_value=_ACTIVE_CONFIG,
-        ):
-            with patch(
+        with (
+            patch(
+                "app.gateway.transport_http.ServerConfigCache.get",
+                return_value=_ACTIVE_CONFIG,
+            ),
+            patch(
                 "app.gateway.transport_http.route_mcp_request",
                 return_value=_INIT_RESPONSE,
-            ):
-                result = await handle_http_request(
-                    slug="test-server",
-                    body={"jsonrpc": "2.0", "id": 1, "method": "initialize"},
-                    request=req,
-                )
+            ),
+        ):
+            result = await handle_http_request(
+                slug="test-server",
+                body={"jsonrpc": "2.0", "id": 1, "method": "initialize"},
+                request=req,
+            )
 
         assert result.headers.get("MCP-Session-Id") == supplied_sid
 
@@ -294,19 +303,21 @@ class TestHandleHttpRequest:
         unknown_sid = "i-do-not-exist"
         req = _mock_request(method="POST", session_id=unknown_sid)
 
-        with patch(
-            "app.gateway.transport_http.ServerConfigCache.get",
-            return_value=_ACTIVE_CONFIG,
-        ):
-            with patch(
+        with (
+            patch(
+                "app.gateway.transport_http.ServerConfigCache.get",
+                return_value=_ACTIVE_CONFIG,
+            ),
+            patch(
                 "app.gateway.transport_http.route_mcp_request",
                 return_value=_INIT_RESPONSE,
-            ):
-                result = await handle_http_request(
-                    slug="test-server",
-                    body={"jsonrpc": "2.0", "id": 1, "method": "initialize"},
-                    request=req,
-                )
+            ),
+        ):
+            result = await handle_http_request(
+                slug="test-server",
+                body={"jsonrpc": "2.0", "id": 1, "method": "initialize"},
+                request=req,
+            )
 
         # Should succeed and return a new session ID (the unknown one
         # was overwritten with a fresh session).
@@ -328,13 +339,15 @@ class TestHandleHttpRequest:
         """A non-existent slug raises NotFoundError (→ 404)."""
         from app.core.exceptions import NotFoundError
 
-        with patch(
-            "app.gateway.transport_http.ServerConfigCache.get",
-            return_value=None,  # ← no server found
+        with (
+            patch(
+                "app.gateway.transport_http.ServerConfigCache.get",
+                return_value=None,  # ← no server found
+            ),
+            pytest.raises(NotFoundError) as exc,
         ):
-            with pytest.raises(NotFoundError) as exc:
-                await handle_http_request(
-                    slug="non-existent-slug",
-                    body={"jsonrpc": "2.0", "id": 1, "method": "initialize"},
-                )
+            await handle_http_request(
+                slug="non-existent-slug",
+                body={"jsonrpc": "2.0", "id": 1, "method": "initialize"},
+            )
         assert "non-existent-slug" in str(exc.value)
