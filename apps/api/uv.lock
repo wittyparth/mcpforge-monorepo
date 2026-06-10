@@ -1345,6 +1345,7 @@ dependencies = [
     { name = "sentry-sdk", extra = ["fastapi"] },
     { name = "sqlalchemy" },
     { name = "sse-starlette" },
+    { name = "stripe" },
     { name = "structlog" },
     { name = "tenacity" },
     { name = "uvicorn", extra = ["standard"] },
@@ -1376,6 +1377,7 @@ dev = [
     { name = "respx" },
     { name = "ruff" },
     { name = "types-pyyaml" },
+    { name = "websockets" },
 ]
 
 [package.metadata]
@@ -1415,6 +1417,7 @@ requires-dist = [
     { name = "sentry-sdk", extras = ["fastapi"], specifier = "~=2.19.0" },
     { name = "sqlalchemy", specifier = "~=2.0.36" },
     { name = "sse-starlette", specifier = "~=2.1.0" },
+    { name = "stripe", specifier = "~=7.0.0" },
     { name = "structlog", specifier = "~=24.4.0" },
     { name = "tenacity", specifier = "~=9.0.0" },
     { name = "uvicorn", extras = ["standard"], specifier = "~=0.32.0" },
@@ -1432,6 +1435,7 @@ dev = [
     { name = "respx", specifier = ">=0.22.0" },
     { name = "ruff", specifier = "~=0.8.0" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20260518" },
+    { name = "websockets", specifier = ">=16.0" },
 ]
 
 [[package]]
@@ -2401,6 +2405,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ce/20/08dfcd9c983f6a6f4a1000d934b9e6d626cff8d2eeb77a89a68eef20a2b7/starlette-0.46.2.tar.gz", hash = "sha256:7f7361f34eed179294600af672f565727419830b54b7b084efe44bb82d2fccd5", size = 2580846, upload-time = "2025-04-13T13:56:17.942Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/0c/9d30a4ebeb6db2b25a841afbb80f6ef9a854fc3b41be131d249a977b4959/starlette-0.46.2-py3-none-any.whl", hash = "sha256:595633ce89f8ffa71a015caed34a5b2dc1c0cdb3f0f1fbd1e69339cf2abeec35", size = 72037, upload-time = "2025-04-13T13:56:16.21Z" },
+]
+
+[[package]]
+name = "stripe"
+version = "7.0.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c9/54/73d048d6d7133718968584f01a7ab1261bd3f68a806ce0251f58f141af7d/stripe-7.0.0.tar.gz", hash = "sha256:9a35f404c04eb80bff0bb618950e0548943f1ef47c14e8e8f4bbc6f5e751ba99", size = 378521, upload-time = "2023-10-16T20:36:28.911Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e0/ed/e7607f9467689efcb9370f310b5e2e46a47c7fb5b7e1df050ef5cb09ab6f/stripe-7.0.0-py2.py3-none-any.whl", hash = "sha256:15ebdcb8271b4fd54ff861d85101a78a6f01ce7c1ae236bb0e2b8f76bf7ffad8", size = 407577, upload-time = "2023-10-16T20:36:26.612Z" },
 ]
 
 [[package]]

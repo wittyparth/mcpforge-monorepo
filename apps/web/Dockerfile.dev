@@ -8,6 +8,9 @@
 # ──────────────────────────────────────────────────────────────────
 FROM node:22-slim AS base
 
+# curl needed for SDK client generation (fetching openapi.json from backend)
+RUN apt-get update -qq && apt-get install -y -qq curl && rm -rf /var/lib/apt/lists/*
+
 RUN corepack enable && pnpm --version
 
 WORKDIR /app

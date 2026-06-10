@@ -166,6 +166,11 @@ pnpm generate
 - **UI:** shadcn/ui components in `apps/web/components/ui/`. Shared ones promote to `packages/ui/`.
 - **State:** Zustand for global client state, TanStack Query for server state. No Redux.
 - **Styling:** Tailwind v4, no CSS modules. CSS variables for theming.
+- **CSRF:** Backend enforces CSRF on all state-changing methods (POST/PUT/PATCH/DELETE) via `X-CSRF-Token` header matching the `csrf_token` cookie.
+  - The generated SDK (`sdk.gen.ts`) handles this automatically via a request interceptor in `sdk-setup.ts`.
+  - For raw `fetch()` calls (SSE, endpoints not yet in SDK), use the `fetchWithCSRF()` helper in `lib/api.ts` instead of `fetch()`.
+  - Only GET/HEAD/OPTIONS are exempt from CSRF.
+  - Never add `@csrf_exempt` to a backend route unless there's a very strong reason.
 
 ### MCP protocol
 
@@ -293,6 +298,15 @@ Free tier stack: Vercel (web) + Render (api) + Neon (Postgres) + Upstash (Redis)
 - [x] Shared types auto-generated from OpenAPI (`@mcpforge/shared-types`, 1064 lines)
 - [x] End-to-end test passes locally: register → cookie set → /me → create server → CORS verified
 - [x] CI (lint, type-check, tests, build), deployment configs (render.yaml, Dockerfile)
+- [x] **F6 Usage Analytics** — 7 test files, 70 tests total (45 pass, 25 skipped on SQLite for PG-specific features):
+  - `test_analytics_recorder.py` — 12 tests (pure functions + DB insert)
+  - `test_analytics_aggregator.py` — 6 tests (1 pass, 5 skipped: date_trunc, FILTER, etc.)
+  - `test_analytics_partition_manager.py` — 4 tests (all skipped: PG partitions)
+  - `test_analytics_queries.py` — 8 tests (4 pass, 4 skipped: date_trunc, etc.)
+  - `test_analytics_description_performance.py` — 4 tests (2 pass, 2 skipped: ::bigint, DISTINCT ON)
+  - `test_analytics_endpoints.py` — 11 tests (auth, ownership, CSV, errors work; PG-specific endpoints skipped)
+  - `test_analytics_repository.py` — 7 test methods (4 pass, 2 skipped: PG time-series, 1 get_call_rate works)
+  - **UUID adapter for SQLite:** `sqlite3.register_adapter(uuid.UUID, lambda u: u.hex)` in `conftest.py` to match ORM's `PG_UUID.bind_processor` format (hex without dashes), fixing raw SQL vs ORM WHERE clause mismatches
 
 ### Phase 2 — OpenAPI spec ingestion (the actual product)
 

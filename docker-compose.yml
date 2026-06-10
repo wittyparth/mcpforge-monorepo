@@ -6,6 +6,10 @@ name: mcpforge-dev
 #   docker compose up --build    ← ONE COMMAND. Starts ALL services.
 #   docker compose down          ← Stop everything.
 #
+# Secrets & API keys are loaded from the root `.env` file via
+# `env_file:`. DO NOT hardcode secrets in this file. To customize,
+# edit the root `.env` (or copy `.env.example` to `.env` first).
+#
 # What runs where:
 #   postgres :5432  |  redis :6379  |  api :8000  |  worker (bg)  |  web :3000
 # ────────────────────────────────────────────────────────────────────
@@ -57,22 +61,22 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # All secrets + LLM/Stripe/GitHub/AWS keys come from the root .env.
+    # Only safe dev defaults are set inline below.
+    env_file:
+      - path: ./.env
+        required: false
     environment:
       ENVIRONMENT: development
       LOG_LEVEL: INFO
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/mcpforge
-      REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: dev-only-jwt-secret-please-change-in-prod-min-32-chars
       CORS_ORIGINS: '["http://localhost:3000", "http://localhost:8000"]'
-      LLM_PROVIDER: opencode-go
-      LLM_BASE_URL: https://opencode.ai/zen/go/v1
-      LLM_MODEL: deepseek-v4-flash
-      LLM_API_KEY: sk-uzE8bXWpo5Dta9wMvREgB1Mb1a74UhZ9pDElGXlA6Elppzdycapiq197z22OMrJG
-      LLM_MAX_TOKENS: 2000
-      LLM_TEMPERATURE: 0.0
-      LLM_JSON_MODE: "true"
+      FRONTEND_URL: "http://localhost:3000"
+      PYTHONUNBUFFERED: "1"
       RATE_LIMIT_PER_IP_PER_MINUTE: "999"
       RATE_LIMIT_AUTH_PER_IP_PER_MINUTE: "999"
+      LLM_MAX_TOKENS: "2000"
+      LLM_TEMPERATURE: "0.0"
+      LLM_JSON_MODE: "true"
     ports:
       - "8000:8000"
     volumes:
@@ -99,18 +103,23 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Override HEALTHCHECK from Dockerfile.dev — the worker runs Celery, not
+    # uvicorn, so localhost:8000/health is not available.  Ping the API
+    # container's health endpoint instead.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://api:8000/health > /dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    env_file:
+      - path: ./.env
+        required: false
     environment:
       ENVIRONMENT: development
       LOG_LEVEL: INFO
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@postgres:5432/mcpforge
-      REDIS_URL: redis://redis:6379/0
-      JWT_SECRET: dev-only-jwt-secret-please-change-in-prod-min-32-chars
-      LLM_PROVIDER: opencode-go
-      LLM_BASE_URL: https://opencode.ai/zen/go/v1
-      LLM_MODEL: deepseek-v4-flash
-      LLM_API_KEY: sk-uzE8bXWpo5Dta9wMvREgB1Mb1a74UhZ9pDElGXlA6Elppzdycapiq197z22OMrJG
-      LLM_MAX_TOKENS: 2000
-      LLM_TEMPERATURE: 0.0
+      LLM_MAX_TOKENS: "2000"
+      LLM_TEMPERATURE: "0.0"
       LLM_JSON_MODE: "true"
     volumes:
       - ./apps/api/app:/app/app
@@ -136,9 +145,12 @@ services:
     container_name: mcpforge-web
     depends_on:
       - api
+    env_file:
+      - path: ./.env
+        required: false
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
-      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      # NEXT_PUBLIC_* must be present at build time too (compose passes both)
+      API_INTERNAL_URL: http://api:8000
     ports:
       - "3000:3000"
     volumes:

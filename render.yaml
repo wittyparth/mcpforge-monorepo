@@ -12,16 +12,42 @@ services:
     envVars:
       - key: ENVIRONMENT
         value: production
+      - key: LOG_LEVEL
+        value: INFO
       - key: DATABASE_URL
         sync: false
       - key: REDIS_URL
         sync: false
       - key: JWT_SECRET
         generateValue: true
+      - key: ENCRYPTION_KEY
+        sync: false
       - key: CORS_ORIGINS
         sync: false
-      - key: LOG_LEVEL
-        value: INFO
+      # AWS S3 (spec storage)
+      - key: AWS_S3_BUCKET
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: us-east-1
+      # Optional integrations (set later if you wire them up)
+      - key: LLM_API_KEY
+        sync: false
+      - key: EMAIL_PROVIDER_API_KEY
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      - key: GITHUB_OAUTH_CLIENT_ID
+        sync: false
+      - key: GITHUB_OAUTH_CLIENT_SECRET
+        sync: false
     buildFilter:
       paths:
         - apps/api/**
