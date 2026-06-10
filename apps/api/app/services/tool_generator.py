@@ -149,7 +149,10 @@ class ToolGenerator:
                 continue
 
             # ``schema_`` is the Python-side name (aliased from ``schema``).
-            p_schema: dict[str, Any] = p.get("schema_", p.get("schema", p.get("aliased_schema", p.get("schema_alias", {}))))
+            p_schema: dict[str, Any] = p.get(
+                "schema_",
+                p.get("schema", p.get("aliased_schema", p.get("schema_alias", {}))),
+            )
             properties[p_name] = {**p_schema, "description": p.get("description", "")}
 
             if p.get("example") is not None:
