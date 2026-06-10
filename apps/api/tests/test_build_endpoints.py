@@ -16,6 +16,7 @@ import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.celery_app import celery_app as _celery_app
 from app.core.config import settings
 from app.models.user import User
 from app.repositories.mcp_server_repo import MCPServerRepository
@@ -43,6 +44,10 @@ class TestStartBuild:
     """POST /api/v1/servers/{server_id}/build"""
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(
+        _celery_app.conf.task_always_eager,
+        reason="asyncio.run() conflicts with Celery eager mode",
+    )
     async def test_start_build_marks_server_building(
         self,
         auth_client: AsyncClient,

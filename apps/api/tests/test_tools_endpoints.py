@@ -14,6 +14,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.celery_app import celery_app as _celery_app
 from app.core.config import settings
 from app.models.mcp_server import MCPServer
 from app.models.user import User
@@ -135,6 +136,10 @@ class TestEnhanceTools:
     """POST /api/v1/servers/{server_id}/tools/enhance."""
 
     @pytest.mark.asyncio
+    @pytest.mark.skipif(
+        _celery_app.conf.task_always_eager,
+        reason="uses asyncio.run() which conflicts with Celery eager mode",
+    )
     async def test_enhance_tools_starts_job(
         self,
         auth_client: AsyncClient,
