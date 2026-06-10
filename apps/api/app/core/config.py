@@ -37,7 +37,11 @@ class Settings(BaseSettings):
     JWT_REFRESH_TTL_DAYS: int = 7
 
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "https://mcpforge-monorepo-web-8nay-c7a96u1b9.vercel.app",
+        "https://mcpforge-monorepo.vercel.app",
+    ]
 
     # Encryption (Fernet master key for credentials at rest)
     ENCRYPTION_KEY: str = ""
