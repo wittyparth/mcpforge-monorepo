@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Integer, String
+from sqlalchemy import Boolean, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base, TimestampMixin, UUIDMixin
@@ -29,13 +29,15 @@ class User(Base, UUIDMixin, TimestampMixin):
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     plan: Mapped[str] = mapped_column(String(20), default="free")
-    plan_expires_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    plan_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     ai_enhancement_credits: Mapped[int] = mapped_column(Integer, default=3)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Wave 0 additions
-    password_changed_at: Mapped[datetime | None] = mapped_column(nullable=True)
-    last_login_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    password_changed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     stripe_customer_id: Mapped[str | None] = mapped_column(String(100), unique=True, nullable=True)
 
     # Relationships

@@ -36,3 +36,31 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
+
+
+class ForgotPasswordRequest(BaseModel):
+    """Request body for initiating a password reset."""
+
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    """Request body for completing a password reset."""
+
+    token: str = Field(..., min_length=1)
+    password: str = Field(..., min_length=12, max_length=128)
+
+
+class VerifyEmailRequest(BaseModel):
+    """Request body for email verification."""
+
+    token: str = Field(..., min_length=1)
+
+
+class ResendVerificationRequest(BaseModel):
+    """Request body for resending the verification email.
+
+    Currently empty (no parameters needed) — the authenticated user's
+    identity is derived from the auth cookie.  This schema exists for
+    future extensibility (e.g., a ``target_email`` override for admins).
+    """

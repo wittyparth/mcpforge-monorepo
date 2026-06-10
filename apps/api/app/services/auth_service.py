@@ -1,6 +1,7 @@
 """Authentication business logic.
 
-Handles registration, login, token creation, and token refresh.
+Handles registration, login, token creation, token refresh, email
+verification, and password reset.
 
 Wave 0 additions:
 - HIBP password-breach check on register (rejects known-breached passwords).
@@ -9,6 +10,11 @@ Wave 0 additions:
   use of the same jti revokes the user's entire token family (theft signal).
 - Argon2id is the primary hashing scheme; legacy bcrypt hashes are rehashed
   to Argon2id on successful login.
+
+Wave 3 additions (F7):
+- Email verification on register (fire-and-forget).
+- ``verify_email`` / ``resend_verification`` helpers.
+- ``request_password_reset`` / ``reset_password`` delegates.
 """
 
 from __future__ import annotations
@@ -19,12 +25,14 @@ from uuid import UUID
 from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.exceptions import (
     ConflictError,
     LockedError,
     UnauthorizedError,
     ValidationError,
 )
+from app.core.logging import get_logger
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -32,8 +40,11 @@ from app.core.security import (
     needs_rehash,
     verify_password,
 )
+from app.models.user import User
 from app.repositories.user_repo import UserRepository
 from app.services.auth import hibp, lockout, token_rotation
+
+logger = get_logger(__name__)
 
 
 class AuthService:
@@ -47,12 +58,17 @@ class AuthService:
         email: str,
         password: str,
         display_name: str | None = None,
+        base_url: str | None = None,
     ) -> dict[str, Any]:
         """Register a new user.
 
         Rejects:
         - Email already registered (409 ConflictError)
         - Password present in HIBP (422 ValidationError, code=PASSWORD_BREACHED)
+
+        After successful registration, a verification email is dispatched
+        fire-and-forget.  Email delivery failures are logged but do not
+        block the registration response.
 
         Returns:
             Dict with user info and token pair.
@@ -65,9 +81,6 @@ class AuthService:
         if existing:
             raise ConflictError("Email already registered")
 
-        # Reject passwords found in HIBP. We do this BEFORE hashing so
-        # the plaintext password is only ever in memory, never in a log
-        # line or DB row.
         hibp_result = await hibp.check_password_breached(password)
         if hibp_result.breached:
             raise ValidationError(
@@ -85,8 +98,44 @@ class AuthService:
             display_name=display_name,
         )
 
+        # Create Stripe customer (fire-and-forget, does not block registration)
+        if not settings.STRIPE_LITIGATED_MODE and settings.STRIPE_SECRET_KEY:
+            try:
+                from app.services.billing.stripe_client import StripeClient
+
+                stripe_client = StripeClient()
+                customer_id = await stripe_client.create_customer(
+                    email=email,
+                    name=display_name,
+                    user_id=str(user.id),
+                )
+                user.stripe_customer_id = customer_id
+                await self.user_repo.session.flush()
+                logger.info(
+                    "stripe_customer_created",
+                    user_id=str(user.id),
+                    customer_id=customer_id,
+                )
+            except Exception:
+                logger.exception(
+                    "failed_to_create_stripe_customer",
+                    user_id=str(user.id),
+                )
+
         access_token = create_access_token(subject=user.id)
         refresh_token, _ = self._issue_refresh_token(user.id)
+
+        # Fire-and-forget verification email
+        resolved_base_url = base_url or settings.APP_URL
+        try:
+            from app.services.auth.email_verification import send_verification
+
+            await send_verification(user, resolved_base_url)
+        except Exception:
+            logger.exception(
+                "failed_to_send_verification_email",
+                user_id=str(user.id),
+            )
 
         return {
             "user": user,
@@ -182,6 +231,55 @@ class AuthService:
         if not user:
             raise UnauthorizedError("User not found")
         return user
+
+    async def request_password_reset(self, email: str, base_url: str) -> None:
+        """Initiate a password reset.
+
+        Always returns ``None`` (no user enumeration).  Rate-limited.
+        """
+        from app.services.auth.password_reset import request_password_reset as _rpr
+
+        await _rpr(email, self.user_repo.session, base_url)
+
+    async def reset_password(self, token: str, new_password: str) -> User:
+        """Complete a password reset.
+
+        Returns the updated ``User``.
+
+        Raises:
+            ValidationError: On invalid/expired/used token or breached password.
+        """
+        from app.services.auth.password_reset import reset_password as _rp
+
+        return await _rp(token, new_password, self.user_repo.session)
+
+    async def verify_email(self, token: str) -> User:
+        """Verify a user's email address using a verification token.
+
+        Returns the updated ``User``.
+
+        Raises:
+            ValidationError: If the token is invalid or the user not found.
+        """
+        from app.services.auth.email_verification import verify_and_mark, verify_email_token
+
+        user_id = verify_email_token(token)
+        return await verify_and_mark(user_id, self.user_repo.session)
+
+    async def resend_verification(self, user: User) -> None:
+        """Resend the verification email for the given user.
+
+        Logs errors but never raises.
+        """
+        from app.services.auth.email_verification import send_verification
+
+        try:
+            await send_verification(user, settings.APP_URL)
+        except Exception:
+            logger.exception(
+                "failed_to_resend_verification_email",
+                user_id=str(user.id),
+            )
 
     async def logout(self, user_id: UUID | None) -> None:
         """Revoke all outstanding refresh tokens for the user (if known)."""
