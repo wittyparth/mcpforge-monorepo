@@ -62,3 +62,27 @@ class ClientBreakdownItem(BaseModel):
     client_name: str
     call_count: int
     last_seen: datetime
+
+
+class DescriptionPerformance(BaseModel):
+    """Performance of a tool after a description edit (F6 unique feature)."""
+
+    tool_name: str
+    edited_at: datetime | None = None
+    edit_source: str | None = None  # 'ai' | 'user' | 'revert'
+    before_call_count: int = 0
+    after_call_count: int = 0
+    delta_pct: float | None = None  # None if no prior data
+    message: str
+    no_edit: bool = False
+
+
+class ExportRow(BaseModel):
+    """A row in the CSV export."""
+
+    called_at: datetime
+    tool_name: str
+    status: str
+    latency_ms: int | None
+    client_name: str | None
+    error_type: str | None
