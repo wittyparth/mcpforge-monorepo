@@ -14,13 +14,16 @@ from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
-from app.core.exceptions import AIDescriptionError, ForbiddenError, NotFoundError, NotImplementedFeatureError
+from app.core.exceptions import (
+    ForbiddenError,
+    NotFoundError,
+)
 from app.core.logging import get_logger
 from app.core.sse import sse_manager
 from app.models.mcp_server import MCPServer
 from app.models.user import User
 from app.repositories.mcp_server_repo import MCPServerRepository
-from app.schemas.ai_description import AIEnhancementResponse, BuildEvent, ToolAcceptRequest
+from app.schemas.ai_description import AIEnhancementResponse, ToolAcceptRequest
 from app.services.server_builder import ServerBuilder
 
 logger = get_logger(__name__)
@@ -218,7 +221,6 @@ async def deploy_server(
     current_user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Deploy the server (triggers security scan first)."""
-    from app.repositories.security_repo import SecurityAckRepository, SecurityScanRepository
     from app.services.security_scanner.scanner import SecurityScanner
 
     repo = MCPServerRepository(session)

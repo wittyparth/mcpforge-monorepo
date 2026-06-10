@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -34,3 +34,20 @@ class PlaygroundShareTestResponse(BaseModel):
     share_id: str
     url: str
     expires_at: datetime
+
+
+class PlaygroundToolCallMeta(BaseModel):
+    """Metadata attached to a tool call response in the playground."""
+
+    elapsed_ms: int = Field(..., description="Execution time in milliseconds")
+
+
+class PlaygroundToolCallResponse(BaseModel):
+    """Full tool call response including result and metadata.
+
+    The ``_meta`` field carries execution timing and other diagnostics.
+    """
+
+    content: list[dict[str, Any]]
+    isError: bool = False  # noqa: N815 — MCP protocol field name
+    _meta: PlaygroundToolCallMeta | None = None

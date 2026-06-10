@@ -95,6 +95,10 @@ async def handle_http_request(
 
     if server_config is None:
         raise NotFoundError(f"Server '{slug}' not found")
+    if server_config.get("status") != "active":
+        raise NotFoundError(
+            f"Server '{slug}' is not active (status: {server_config.get('status')})"
+        )
 
     # ── Session management ────────────────────────────────────────────
     session_id: str | None = None

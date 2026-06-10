@@ -23,6 +23,7 @@ from app.core.security import decode_token
 from app.gateway.transport_http import handle_http_request
 from app.gateway.transport_sse import handle_message, handle_sse_connection
 from app.repositories.user_repo import UserRepository
+from app.services.api_key_service import ApiKeyService
 
 router = APIRouter()
 
@@ -31,9 +32,10 @@ async def authenticate_mcp_request(
     request: Request,
     session: AsyncSession = Depends(get_db),
 ) -> object:
-    """Authenticate a gateway request, accepting JWT from any of:
+    """Authenticate a gateway request, accepting JWT or API key from any of:
 
     - `Authorization: Bearer <token>` header (programmatic clients)
+    - `Authorization: Bearer mcpforge_live_...` header (API key auth)
     - `access_token` httpOnly cookie (browser clients)
 
     Raises:
@@ -51,6 +53,16 @@ async def authenticate_mcp_request(
     if not token:
         raise UnauthorizedError("Authentication required for MCP gateway")
 
+    # API key auth
+    api_key_prefix = "mcpforge_live_"
+    if token.startswith(api_key_prefix):
+        service = ApiKeyService(session)
+        user = await service.authenticate(token)
+        if user is None:
+            raise UnauthorizedError("Invalid or revoked API key")
+        return user
+
+    # JWT auth
     try:
         payload = decode_token(token)
         if payload.get("type") != "access":

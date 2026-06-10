@@ -14,7 +14,6 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
-from app.core.exceptions import NotImplementedFeatureError
 from app.core.logging import get_logger
 from app.models.user import User as UserModel
 from app.schemas.gateway import (
@@ -217,13 +216,3 @@ async def resume_server(
     )
 
 
-@router.post("/rollback", status_code=501)
-async def rollback_server(server_id: UUID) -> None:
-    """Roll back to a previous server version. Pending Phase 7."""
-    raise NotImplementedFeatureError("Rollback: pending Phase 7")
-
-
-@router.get("/versions", status_code=501)
-async def list_versions(server_id: UUID) -> None:
-    """List version history for a server. Pending Phase 7."""
-    raise NotImplementedFeatureError("Versions: pending Phase 7")

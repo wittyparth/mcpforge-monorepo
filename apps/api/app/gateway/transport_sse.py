@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -32,6 +33,7 @@ from sse_starlette.sse import EventSourceResponse
 from app.core.exceptions import NotFoundError
 from app.core.logging import get_logger
 from app.core.redis import get_redis
+from app.gateway.analytics_bridge import classify_dispatch_status, emit_tool_call
 from app.gateway.errors import (
     method_not_found_error,
     rate_limit_error,
@@ -417,6 +419,7 @@ async def route_mcp_request(
 
         # 4. Dispatch the tool call
         dispatcher = ToolDispatcher()
+        started_at = time.monotonic()
         try:
             result = await dispatcher.dispatch(
                 server_config,
@@ -424,11 +427,29 @@ async def route_mcp_request(
                 arguments,
                 credential_value,
             )
+            elapsed_ms = int((time.monotonic() - started_at) * 1000)
+            response_size = sum(
+                len(str(b.get("text", "")).encode("utf-8"))
+                for b in result.get("content", [])
+                if isinstance(b, dict)
+            )
+            status, error_type, error_msg = classify_dispatch_status(result)
+            emit_tool_call(
+                server_id=server_config["server_id"],
+                tool_name=tool_name,
+                status=status,
+                latency_ms=elapsed_ms,
+                response_size_bytes=response_size,
+                error_type=error_type,
+                error_msg=error_msg,
+                client_name=session.client_name,
+            )
 
             logger.info(
                 "tool_call_succeeded",
                 tool_name=tool_name,
                 session_id=session.session_id,
+                latency_ms=elapsed_ms,
             )
 
             return {
@@ -437,6 +458,17 @@ async def route_mcp_request(
                 "result": result,
             }
         except Exception as exc:
+            elapsed_ms = int((time.monotonic() - started_at) * 1000)
+            emit_tool_call(
+                server_id=server_config["server_id"],
+                tool_name=tool_name,
+                status="error",
+                latency_ms=elapsed_ms,
+                response_size_bytes=None,
+                error_type=type(exc).__name__,
+                error_msg=str(exc)[:500],
+                client_name=session.client_name,
+            )
             logger.exception(
                 "tool_call_failed",
                 tool_name=tool_name,

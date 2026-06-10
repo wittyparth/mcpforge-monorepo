@@ -155,45 +155,54 @@ class ToolDispatcher:
         Returns:
             A fully constructed ``httpx.Request`` ready to send.
         """
-        base_url = server_config["base_url"].rstrip("/")
+        base_url = server_config["base_url"].strip().rstrip("/")
 
         path: str = tool_config.get("path", "/")
+        method: str = tool_config.get("method", "GET").upper()
 
         parameters: list[dict[str, Any]] = tool_config.get("parameters", [])
+        enhanced_params: list[dict[str, Any]] = tool_config.get("enhanced_parameters", [])
 
         path_param_names: set[str] = set()
         query_param_names: set[str] = set()
         header_param_names: set[str] = set()
 
-        for param in parameters:
-            param_name = param.get("name", "")
-            param_in = param.get("in", "")
-            if param_in == "path":
-                path_param_names.add(param_name)
-            elif param_in == "query":
-                query_param_names.add(param_name)
-            elif param_in == "header":
-                header_param_names.add(param_name)
+        # Infer path params from the URL template (e.g. {petId})
+        import re as _re
+        for match in _re.finditer(r"\{(\w+)\}", path):
+            path_param_names.add(match.group(1))
+
+        # Also check explicit parameters list for in=path/query/header
+        for param_list in (parameters, enhanced_params):
+            for param in param_list:
+                param_name = param.get("name", "")
+                param_in = param.get("in", "")
+                if param_in == "path":
+                    path_param_names.add(param_name)
+                elif param_in == "query":
+                    query_param_names.add(param_name)
+                elif param_in == "header":
+                    header_param_names.add(param_name)
 
         for param_name in path_param_names:
             if param_name in arguments:
                 placeholder = f"{{{param_name}}}"
                 path = path.replace(placeholder, str(arguments[param_name]))
 
+        # For GET/HEAD/DELETE, everything non-path goes to query
+        # For POST/PUT/PATCH, non-path params go to body
+        is_query_method = method in ("GET", "HEAD", "DELETE")
         query_params: dict[str, str | int | float | bool] = {}
-        for param_name in query_param_names:
-            if param_name in arguments:
-                value = arguments[param_name]
-                if isinstance(value, str | int | float | bool):
-                    query_params[param_name] = value
-                else:
-                    query_params[param_name] = str(value)
-
         body_params: dict[str, object] = {}
-        method = tool_config.get("method", "GET").upper()
-        excluded = path_param_names | query_param_names | header_param_names
         for arg_name, arg_value in arguments.items():
-            if arg_name not in excluded:
+            if arg_name in path_param_names or arg_name in header_param_names:
+                continue
+            if arg_name in query_param_names or is_query_method:
+                if isinstance(arg_value, str | int | float | bool):
+                    query_params[arg_name] = arg_value
+                else:
+                    query_params[arg_name] = str(arg_value)
+            else:
                 body_params[arg_name] = arg_value
 
         body_json: bytes | None = None
