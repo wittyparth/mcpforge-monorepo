@@ -72,6 +72,9 @@ secrets/
 /architecture/
 /.planning/
 
+# MCP client config files (may contain API keys — never commit)
+.mcp.json
+
 # oh-my-opencode runtime cache
 .omo/
 
