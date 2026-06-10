@@ -42,3 +42,10 @@ class ApiKeyCreatedResponse(ApiKeyResponse):
     """
 
     plaintext_key: str = Field(..., description="Shown ONCE at creation. Store securely.")
+
+
+class ApiKeyListResponse(BaseModel):
+    """Response for GET /api/v1/api-keys — list of keys."""
+
+    items: list[ApiKeyResponse]
+    total: int

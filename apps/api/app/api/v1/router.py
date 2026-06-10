@@ -18,6 +18,7 @@ from app.api.v1.endpoints.build import router as build_router
 from app.api.v1.endpoints.credentials import router as credentials_router
 from app.api.v1.endpoints.gateway_admin import router as gateway_admin_router
 from app.api.v1.endpoints.health import router as health_router
+from app.api.v1.endpoints.playground import router as playground_router
 from app.api.v1.endpoints.security import router as security_router
 from app.api.v1.endpoints.servers import router as servers_router
 from app.api.v1.endpoints.specs import router as specs_router
@@ -34,6 +35,7 @@ router.include_router(auth_router, prefix="/auth", tags=["auth"])
 # /{server_id} wins the race against UUID validation 422.
 router.include_router(health_router, prefix="/servers", tags=["servers"])
 router.include_router(servers_router, prefix="/servers", tags=["servers"])
+router.include_router(playground_router, prefix="/servers", tags=["playground"])
 
 # Wave 0 Skeleton — F1, F2, F4, F5, F6, F7 stubs (return 501 until implemented)
 router.include_router(specs_router, tags=["specs"])

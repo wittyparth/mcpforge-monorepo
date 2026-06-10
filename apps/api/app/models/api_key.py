@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -41,11 +41,11 @@ class ApiKey(Base, UUIDMixin, TimestampMixin):
     key_prefix: Mapped[str] = mapped_column(String(20), nullable=False)
     key_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     scopes: Mapped[list[str]] = mapped_column(
-        __import__("sqlalchemy").JSON, nullable=False, default=list
+        __import__("sqlalchemy").JSON, nullable=False, default=list, server_default="[]"
     )
-    last_used_at: Mapped[datetime | None] = mapped_column(nullable=True)
-    expires_at: Mapped[datetime | None] = mapped_column(nullable=True)
-    revoked_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     team: Mapped[Team | None] = relationship("Team", back_populates="api_keys")
 
