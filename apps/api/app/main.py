@@ -136,9 +136,16 @@ app.add_middleware(RateLimitMiddleware)
 
 # 4. CORS — must be OUTER to CSRF + RateLimit so their rejection responses
 #    get Access-Control-Allow-Origin headers (browsers need these on errors).
+# The CORS origins list always includes known production URLs regardless
+# of env var values — this prevents frontend-backend CORS failures when
+# the env var is not set or stale.
+_KNOWN_ORIGINS: list[str] = [
+    "https://mcpforge-monorepo-web-8nay-c7a96u1b9.vercel.app",
+    "https://mcpforge-monorepo.vercel.app",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=[*settings.CORS_ORIGINS, *_KNOWN_ORIGINS],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-CSRF-Token"],
