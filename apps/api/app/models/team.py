@@ -111,7 +111,7 @@ class TeamInvitation(Base, UUIDMixin, TimestampMixin):
         PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    accepted_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    accepted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     team: Mapped[Team] = relationship("Team", back_populates="invitations")
 

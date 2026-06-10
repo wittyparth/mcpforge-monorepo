@@ -102,7 +102,7 @@ def upgrade() -> None:
         sa.Column("resource_type", sa.String(50), nullable=True),
         sa.Column("resource_id", postgresql.UUID(as_uuid=True), nullable=True),
         sa.Column("metadata", postgresql.JSONB(), nullable=True),
-        sa.Column("ip_address", postgresql.INET(), nullable=True),
+        sa.Column("ip_address", sa.String(45), nullable=True),
         sa.Column("user_agent", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")),
         sa.ForeignKeyConstraint(["team_id"], ["teams.id"], ondelete="CASCADE"),
