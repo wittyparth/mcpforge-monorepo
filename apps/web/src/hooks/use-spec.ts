@@ -46,7 +46,14 @@ export function useFetchSpec() {
       toast.success("Spec fetched successfully");
     },
     onError: (error: unknown) => {
-      if (error instanceof ApiClientError) {
+      if (error instanceof ApiClientError && error.body) {
+        const body =
+          typeof error.body === "string"
+            ? JSON.parse(error.body)
+            : error.body;
+        const detail = body?.error?.message ?? body?.detail ?? error.message;
+        toast.error(detail);
+      } else if (error instanceof Error) {
         toast.error(error.message);
       } else {
         toast.error("Failed to fetch spec. Please try again.");

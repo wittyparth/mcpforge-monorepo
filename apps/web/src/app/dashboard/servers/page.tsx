@@ -1,17 +1,48 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Plus, Server } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Plus, Server, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ServerCard } from "@/components/dashboard/server-card";
+import { DuplicateServerDialog } from "@/components/server/duplicate-server-dialog";
+import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { useServers } from "@/hooks/use-servers";
+import { api, ApiClientError } from "@/lib/api";
+import type { McpServer } from "@/types/api";
 
 export default function ServersPage() {
   const { data, isLoading, isError, error } = useServers();
+  const qc = useQueryClient();
+  const [duplicateTarget, setDuplicateTarget] = useState<McpServer | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<McpServer | null>(null);
+
+  const deleteSrv = useMutation({
+    mutationFn: (id: string) => api.servers.delete(id),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["servers"] });
+      toast.success("Server deleted");
+      setDeleteTarget(null);
+    },
+    onError: (e: unknown) => {
+      toast.error(e instanceof ApiClientError ? e.message : "Failed to delete server");
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -84,10 +115,62 @@ export default function ServersPage() {
       {data && data.length > 0 && (
         <div className="space-y-4">
           {data.map((server: any) => (
-            <ServerCard key={server.id} server={server} />
+            <ServerCard
+              key={server.id}
+              server={server}
+              onDuplicate={(s) => setDuplicateTarget(s)}
+              onDelete={(s) => setDeleteTarget(s)}
+            />
           ))}
         </div>
       )}
+
+      {duplicateTarget && (
+        <DuplicateServerDialog
+          open={!!duplicateTarget}
+          onOpenChange={(o) => { if (!o) setDuplicateTarget(null); }}
+          serverId={duplicateTarget.id}
+          currentName={duplicateTarget.name}
+          prefillName={duplicateTarget.name}
+        />
+      )}
+
+      {/* ── Delete server confirmation ── */}
+      <Dialog open={!!deleteTarget} onOpenChange={(o) => { if (!o) setDeleteTarget(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-4 w-4 text-destructive" />
+              Delete server
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong>{deleteTarget?.name}</strong>?
+              This action cannot be undone. All associated data will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (deleteTarget) deleteSrv.mutate(deleteTarget.id);
+              }}
+              disabled={deleteSrv.isPending}
+            >
+              {deleteSrv.isPending ? (
+                <>
+                  <LoadingSpinner size="sm" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete server"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

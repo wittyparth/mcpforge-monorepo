@@ -1,7 +1,6 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CopyToClipboard } from "@/components/shared/copy-to-clipboard";
 import { useConnectPanel } from "@/hooks/use-gateway";

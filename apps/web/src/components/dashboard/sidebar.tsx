@@ -6,9 +6,12 @@ import {
   LayoutDashboard,
   Server,
   Settings,
+  Users,
   ChevronLeft,
   ChevronRight,
   Cable,
+  KeyRound,
+  CreditCard,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -28,9 +31,24 @@ const navItems = [
     icon: Server,
   },
   {
+    title: "Team",
+    href: "/dashboard/team",
+    icon: Users,
+  },
+  {
+    title: "Billing",
+    href: "/dashboard/billing",
+    icon: CreditCard,
+  },
+  {
     title: "Settings",
     href: "/dashboard/settings",
     icon: Settings,
+  },
+  {
+    title: "API Keys",
+    href: "/dashboard/settings/api-keys",
+    icon: KeyRound,
   },
 ] as const;
 

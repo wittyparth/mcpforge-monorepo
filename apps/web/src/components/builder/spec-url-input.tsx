@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { specFetchSchema, type SpecFetchInput } from "@/lib/validators";
 import { useFetchSpec } from "@/hooks/use-spec";
+import { ApiClientError } from "@/lib/api";
 import type { SpecUploadResponse } from "@/types/api";
 
 interface SpecUrlInputProps {
@@ -88,8 +89,19 @@ const SpecUrlInput = React.forwardRef<HTMLDivElement, SpecUrlInputProps>(
         });
         onSuccess(result as any);
       } catch (err: unknown) {
-        const message =
-          err instanceof Error ? err.message : "Failed to fetch spec";
+        let message = "Failed to fetch spec";
+        if (err instanceof ApiClientError && err.body) {
+          const body =
+            typeof err.body === "string" ? JSON.parse(err.body) : err.body;
+          const detail = body?.error?.message ?? body?.detail ?? null;
+          const suggestion = body?.error?.suggestion ?? null;
+          if (detail) {
+            message = detail;
+            if (suggestion) message += ` — ${suggestion}`;
+          }
+        } else if (err instanceof Error) {
+          message = err.message;
+        }
         onError?.(message);
       }
     };

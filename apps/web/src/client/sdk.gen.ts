@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { AnalyticsOverviewApiV1ServersServerIdAnalyticsGetData, ToolBreakdownApiV1ServersServerIdAnalyticsToolsGetData, ErrorLogApiV1ServersServerIdAnalyticsErrorsGetData, ClientBreakdownApiV1ServersServerIdAnalyticsClientsGetData, TimeseriesApiV1ServersServerIdAnalyticsTimeseriesGetData, ExportCsvApiV1ServersServerIdAnalyticsExportCsvGetData, RevokeApiKeyApiV1ApiKeysKeyIdDeleteData, RegisterApiV1AuthRegisterPostData, RegisterApiV1AuthRegisterPostResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostResponse, RefreshTokenApiV1AuthRefreshPostData, RefreshTokenApiV1AuthRefreshPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostResponse, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponse, StartBuildApiV1ServersServerIdBuildPostData, StartBuildApiV1ServersServerIdBuildPostResponse, BuildStatusSseApiV1ServersServerIdBuildStatusGetData, BuildStatusSseApiV1ServersServerIdBuildStatusGetResponse, AcceptAiEnhancementsApiV1ServersServerIdToolsAcceptPostData, AcceptAiEnhancementsApiV1ServersServerIdToolsAcceptPostResponse, DeployServerApiV1ServersServerIdDeployPostData, ListCredentialsApiV1ServersServerIdCredentialsGetData, ListCredentialsApiV1ServersServerIdCredentialsGetResponse, AddCredentialApiV1ServersServerIdCredentialsPostData, AddCredentialApiV1ServersServerIdCredentialsPostResponse, TestCredentialApiV1ServersServerIdCredentialsTestPostData, TestCredentialApiV1ServersServerIdCredentialsTestPostResponse, DeleteCredentialApiV1ServersServerIdCredentialsEnvVarNameDeleteData, DeleteCredentialApiV1ServersServerIdCredentialsEnvVarNameDeleteResponse, McpServerHealthMcpV1SlugHealthGetData, McpServerHealthMcpV1SlugHealthGetResponse, McpSseEndpointMcpV1SlugSseGetData, McpSseEndpointMcpV1SlugSseGetResponse, McpMessageEndpointMcpV1SlugMessagePostData, McpMessageEndpointMcpV1SlugMessagePostResponse, McpHttpGetEndpointMcpV1SlugGetData, McpHttpGetEndpointMcpV1SlugGetResponse, McpHttpEndpointMcpV1SlugPostData, McpHttpEndpointMcpV1SlugPostResponse, HealthCheckHealthGetResponse, ConnectPanelApiV1ServersServerIdConnectGetData, ConnectPanelApiV1ServersServerIdConnectGetResponse, TestConnectionApiV1ServersServerIdConnectTestPostData, TestConnectionApiV1ServersServerIdConnectTestPostResponse, PauseServerApiV1ServersServerIdPausePostData, PauseServerApiV1ServersServerIdPausePostResponse, ResumeServerApiV1ServersServerIdResumePostData, ResumeServerApiV1ServersServerIdResumePostResponse, RollbackServerApiV1ServersServerIdRollbackPostData, ListVersionsApiV1ServersServerIdVersionsGetData, TriggerScanApiV1ServersServerIdSecurityScanPostData, GetLatestScanApiV1ServersServerIdSecurityLatestGetData, ListScansApiV1ServersServerIdSecurityScansGetData, AcknowledgeFindingApiV1ServersServerIdSecurityFindingIdAcknowledgePostData, ExportReportApiV1ServersServerIdSecurityReportJsonGetData, ListAcknowledgmentsApiV1ServersServerIdSecurityAcknowledgmentsGetData, ApiHealthApiV1ServersHealthGetResponse, ListServersApiV1ServersGetData, ListServersApiV1ServersGetResponse, CreateServerApiV1ServersPostData, CreateServerApiV1ServersPostResponse, GetServerApiV1ServersServerIdGetData, GetServerApiV1ServersServerIdGetResponse, UpdateServerApiV1ServersServerIdPatchData, UpdateServerApiV1ServersServerIdPatchResponse, DeleteServerApiV1ServersServerIdDeleteData, DeleteServerApiV1ServersServerIdDeleteResponse, FetchSpecApiV1SpecsFetchPostData, FetchSpecApiV1SpecsFetchPostResponse, UploadSpecApiV1SpecsUploadPostData, UploadSpecApiV1SpecsUploadPostResponse, GetSpecToolsApiV1SpecsSpecIdToolsGetData, GetSpecToolsApiV1SpecsSpecIdToolsGetResponse, SelectToolsApiV1SpecsSpecIdSelectToolsPostData, SelectToolsApiV1SpecsSpecIdSelectToolsPostResponse, GetSpecApiV1SpecsSpecIdGetData, GetSpecApiV1SpecsSpecIdGetResponse, DeleteSpecApiV1SpecsSpecIdDeleteData, DeleteSpecApiV1SpecsSpecIdDeleteResponse, UpdateMemberApiV1TeamMembersUserIdPatchData, RemoveMemberApiV1TeamMembersUserIdDeleteData, ListToolsApiV1ServersServerIdToolsGetData, ListToolsApiV1ServersServerIdToolsGetResponse, UpdateToolApiV1ServersServerIdToolsToolNamePatchData, UpdateToolApiV1ServersServerIdToolsToolNamePatchResponse, EnhanceToolsApiV1ServersServerIdToolsEnhancePostData, EnhanceToolsApiV1ServersServerIdToolsEnhancePostResponse } from './types.gen';
+import type { AnalyticsOverviewApiV1ServersServerIdAnalyticsGetData, ToolBreakdownApiV1ServersServerIdAnalyticsToolsGetData, ErrorLogApiV1ServersServerIdAnalyticsErrorsGetData, ClientBreakdownApiV1ServersServerIdAnalyticsClientsGetData, TimeseriesApiV1ServersServerIdAnalyticsTimeseriesGetData, ExportCsvApiV1ServersServerIdAnalyticsExportCsvGetData, ListApiKeysApiV1ApiKeysGetData, ListApiKeysApiV1ApiKeysGetResponse, CreateApiKeyApiV1ApiKeysPostData, CreateApiKeyApiV1ApiKeysPostResponse, RevokeApiKeyApiV1ApiKeysKeyIdDeleteData, RevokeApiKeyApiV1ApiKeysKeyIdDeleteResponse, RegisterApiV1AuthRegisterPostData, RegisterApiV1AuthRegisterPostResponse, LoginApiV1AuthLoginPostData, LoginApiV1AuthLoginPostResponse, RefreshTokenApiV1AuthRefreshPostData, RefreshTokenApiV1AuthRefreshPostResponse, LogoutApiV1AuthLogoutPostData, LogoutApiV1AuthLogoutPostResponse, GetMeApiV1AuthMeGetData, GetMeApiV1AuthMeGetResponse, ForgotPasswordApiV1AuthForgotPasswordPostData, ForgotPasswordApiV1AuthForgotPasswordPostResponse, ResetPasswordApiV1AuthResetPasswordPostData, ResetPasswordApiV1AuthResetPasswordPostResponse, VerifyEmailApiV1AuthVerifyEmailPostData, VerifyEmailApiV1AuthVerifyEmailPostResponse, ResendVerificationApiV1AuthResendVerificationPostData, ResendVerificationApiV1AuthResendVerificationPostResponse, GithubOauthStartApiV1AuthGithubGetResponse, GithubOauthCallbackApiV1AuthGithubCallbackGetData, GithubOauthCallbackApiV1AuthGithubCallbackGetResponse, ListPlansApiV1BillingPlansGetResponse, SubscribeApiV1BillingSubscribePostData, SubscribeApiV1BillingSubscribePostResponse, CustomerPortalApiV1BillingPortalPostData, CustomerPortalApiV1BillingPortalPostResponse, StripeWebhookApiV1BillingWebhookPostResponse, GetSubscriptionApiV1BillingSubscriptionGetData, GetSubscriptionApiV1BillingSubscriptionGetResponse, ListInvoicesApiV1BillingInvoicesGetData, ListInvoicesApiV1BillingInvoicesGetResponse, StartBuildApiV1ServersServerIdBuildPostData, StartBuildApiV1ServersServerIdBuildPostResponse, BuildStatusSseApiV1ServersServerIdBuildStatusGetData, BuildStatusSseApiV1ServersServerIdBuildStatusGetResponse, AcceptAiEnhancementsApiV1ServersServerIdToolsAcceptPostData, AcceptAiEnhancementsApiV1ServersServerIdToolsAcceptPostResponse, DeployServerApiV1ServersServerIdDeployPostData, DeployServerApiV1ServersServerIdDeployPostResponse, ListCredentialsApiV1ServersServerIdCredentialsGetData, ListCredentialsApiV1ServersServerIdCredentialsGetResponse, AddCredentialApiV1ServersServerIdCredentialsPostData, AddCredentialApiV1ServersServerIdCredentialsPostResponse, TestCredentialApiV1ServersServerIdCredentialsTestPostData, TestCredentialApiV1ServersServerIdCredentialsTestPostResponse, DeleteCredentialApiV1ServersServerIdCredentialsEnvVarNameDeleteData, DeleteCredentialApiV1ServersServerIdCredentialsEnvVarNameDeleteResponse, McpServerHealthMcpV1SlugHealthGetData, McpServerHealthMcpV1SlugHealthGetResponse, McpSseEndpointMcpV1SlugSseGetData, McpSseEndpointMcpV1SlugSseGetResponse, McpMessageEndpointMcpV1SlugMessagePostData, McpMessageEndpointMcpV1SlugMessagePostResponse, McpHttpGetEndpointMcpV1SlugGetData, McpHttpGetEndpointMcpV1SlugGetResponse, McpHttpEndpointMcpV1SlugPostData, McpHttpEndpointMcpV1SlugPostResponse, HealthCheckHealthGetResponse, ListVersionsApiV1ServersServerIdVersionsGetData, RollbackServerApiV1ServersServerIdRollbackPostData, ConnectPanelApiV1ServersServerIdConnectGetData, ConnectPanelApiV1ServersServerIdConnectGetResponse, TestConnectionApiV1ServersServerIdConnectTestPostData, TestConnectionApiV1ServersServerIdConnectTestPostResponse, PauseServerApiV1ServersServerIdPausePostData, PauseServerApiV1ServersServerIdPausePostResponse, ResumeServerApiV1ServersServerIdResumePostData, ResumeServerApiV1ServersServerIdResumePostResponse, TriggerScanApiV1ServersServerIdSecurityScanPostData, TriggerScanApiV1ServersServerIdSecurityScanPostResponse, GetLatestScanApiV1ServersServerIdSecurityLatestGetData, GetLatestScanApiV1ServersServerIdSecurityLatestGetResponse, ListScansApiV1ServersServerIdSecurityScansGetData, ListScansApiV1ServersServerIdSecurityScansGetResponse, AcknowledgeFindingApiV1ServersServerIdSecurityFindingIdAcknowledgePostData, AcknowledgeFindingApiV1ServersServerIdSecurityFindingIdAcknowledgePostResponse, RemoveAcknowledgmentApiV1ServersServerIdSecurityFindingIdAcknowledgeDeleteData, RemoveAcknowledgmentApiV1ServersServerIdSecurityFindingIdAcknowledgeDeleteResponse, ExportReportApiV1ServersServerIdSecurityReportJsonGetData, ExportReportApiV1ServersServerIdSecurityReportJsonGetResponse, ListAcknowledgmentsApiV1ServersServerIdSecurityAcknowledgmentsGetData, ListAcknowledgmentsApiV1ServersServerIdSecurityAcknowledgmentsGetResponse, ApiHealthApiV1ServersHealthGetResponse, ListServersApiV1ServersGetData, ListServersApiV1ServersGetResponse, CreateServerApiV1ServersPostData, CreateServerApiV1ServersPostResponse, GetServerApiV1ServersServerIdGetData, GetServerApiV1ServersServerIdGetResponse, UpdateServerApiV1ServersServerIdPatchData, UpdateServerApiV1ServersServerIdPatchResponse, DeleteServerApiV1ServersServerIdDeleteData, DeleteServerApiV1ServersServerIdDeleteResponse, DuplicateServerApiV1ServersServerIdDuplicatePostData, DuplicateServerApiV1ServersServerIdDuplicatePostResponse, FetchSpecApiV1SpecsFetchPostData, FetchSpecApiV1SpecsFetchPostResponse, UploadSpecApiV1SpecsUploadPostData, UploadSpecApiV1SpecsUploadPostResponse, GetSpecToolsApiV1SpecsSpecIdToolsGetData, GetSpecToolsApiV1SpecsSpecIdToolsGetResponse, SelectToolsApiV1SpecsSpecIdSelectToolsPostData, SelectToolsApiV1SpecsSpecIdSelectToolsPostResponse, GetSpecApiV1SpecsSpecIdGetData, GetSpecApiV1SpecsSpecIdGetResponse, DeleteSpecApiV1SpecsSpecIdDeleteData, DeleteSpecApiV1SpecsSpecIdDeleteResponse, GetTeamApiV1TeamGetData, GetTeamApiV1TeamGetResponse, CreateTeamApiV1TeamPostData, CreateTeamApiV1TeamPostResponse, UpdateTeamApiV1TeamPatchData, UpdateTeamApiV1TeamPatchResponse, InviteMemberApiV1TeamInvitePostData, InviteMemberApiV1TeamInvitePostResponse, AcceptInvitationApiV1TeamAcceptPostData, AcceptInvitationApiV1TeamAcceptPostResponse, ListMembersApiV1TeamMembersGetData, ListMembersApiV1TeamMembersGetResponse, UpdateMemberApiV1TeamMembersUserIdPatchData, UpdateMemberApiV1TeamMembersUserIdPatchResponse, RemoveMemberApiV1TeamMembersUserIdDeleteData, RemoveMemberApiV1TeamMembersUserIdDeleteResponse, AuditLogApiV1TeamAuditLogGetData, AuditLogApiV1TeamAuditLogGetResponse, ListToolsApiV1ServersServerIdToolsGetData, ListToolsApiV1ServersServerIdToolsGetResponse, UpdateToolApiV1ServersServerIdToolsToolNamePatchData, UpdateToolApiV1ServersServerIdToolsToolNamePatchResponse, EnhanceToolsApiV1ServersServerIdToolsEnhancePostData, EnhanceToolsApiV1ServersServerIdToolsEnhancePostResponse } from './types.gen';
 
 export class AnalyticsService {
     /**
@@ -136,51 +136,86 @@ export class AnalyticsService {
 export class ApiKeysService {
     /**
      * List Api Keys
-     * List all API keys for the user/team. Pending F7.
+     * List all API keys for the current user.
+     * @param data The data for the request.
+     * @param data.includeRevoked
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns ApiKeyListResponse Successful Response
      * @throws ApiError
      */
-    public static listApiKeys(): CancelablePromise<void> {
+    public static listApiKeys(data: ListApiKeysApiV1ApiKeysGetData = {}): CancelablePromise<ListApiKeysApiV1ApiKeysGetResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/api-keys',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            query: {
+                include_revoked: data.includeRevoked
+            },
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Create Api Key
-     * Create a new API key (returns plaintext once). Pending F7.
+     * Create a new API key. The plaintext key is returned ONCE.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns ApiKeyCreatedResponse Successful Response
      * @throws ApiError
      */
-    public static createApiKey(): CancelablePromise<void> {
+    public static createApiKey(data: CreateApiKeyApiV1ApiKeysPostData): CancelablePromise<CreateApiKeyApiV1ApiKeysPostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/api-keys',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Revoke Api Key
-     * Revoke an API key. Pending F7.
+     * Revoke an API key. Verifies ownership first.
      * @param data The data for the request.
      * @param data.keyId
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns void Successful Response
      * @throws ApiError
      */
-    public static revokeApiKey(data: RevokeApiKeyApiV1ApiKeysKeyIdDeleteData): CancelablePromise<void> {
+    public static revokeApiKey(data: RevokeApiKeyApiV1ApiKeysKeyIdDeleteData): CancelablePromise<RevokeApiKeyApiV1ApiKeysKeyIdDeleteResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
             url: '/api/v1/api-keys/{key_id}',
             path: {
                 key_id: data.keyId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
@@ -317,75 +352,175 @@ export class AuthService {
     
     /**
      * Forgot Password
-     * Request a password reset email. Pending F7.
+     * Request a password reset email.
+     *
+     * Always returns 200 with the same message, regardless of whether the
+     * email exists in the system (prevents user enumeration).  Rate-limited
+     * to 3 requests per email per hour.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns MessageResponse Successful Response
      * @throws ApiError
      */
-    public static forgotPassword(): CancelablePromise<void> {
+    public static forgotPassword(data: ForgotPasswordApiV1AuthForgotPasswordPostData): CancelablePromise<ForgotPasswordApiV1AuthForgotPasswordPostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/auth/forgot-password',
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Reset Password
-     * Reset password using a token from the email. Pending F7.
+     * Reset a password using a token from the email.
+     *
+     * On success, all existing sessions are invalidated and the user must
+     * log in again.
+     *
+     * Raises:
+     * 422: Token invalid/expired/used, or the password is in HIBP.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @returns MessageResponse Successful Response
      * @throws ApiError
      */
-    public static resetPassword(): CancelablePromise<void> {
+    public static resetPassword(data: ResetPasswordApiV1AuthResetPasswordPostData): CancelablePromise<ResetPasswordApiV1AuthResetPasswordPostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/auth/reset-password',
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Verify Email
-     * Verify an email using a token. Pending F7.
+     * Verify the authenticated user's email using a verification token.
+     *
+     * The token was sent via email during registration (or via
+     * ``/resend-verification``).  Must be authenticated.
+     *
+     * Raises:
+     * 422: Token invalid or expired.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns UserResponse Successful Response
      * @throws ApiError
      */
-    public static verifyEmail(): CancelablePromise<void> {
+    public static verifyEmail(data: VerifyEmailApiV1AuthVerifyEmailPostData): CancelablePromise<VerifyEmailApiV1AuthVerifyEmailPostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/auth/verify-email',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Resend Verification
+     * Resend the email-verification email.
+     *
+     * Must be authenticated.  Generates a fresh token and sends a new email.
+     * Does NOT invalidate any previously sent tokens (all remain valid until
+     * their 24-hour expiry or until the user verifies).
+     * @param data The data for the request.
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns MessageResponse Successful Response
+     * @throws ApiError
+     */
+    public static resendVerification(data: ResendVerificationApiV1AuthResendVerificationPostData = {}): CancelablePromise<ResendVerificationApiV1AuthResendVerificationPostResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/auth/resend-verification',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            errors: {
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Github Oauth Start
-     * Redirect to GitHub OAuth. Pending F7.
+     * Start GitHub OAuth 2.0 authorization code flow.
+     *
+     * Generates a CSRF-protecting state token, stores it in Redis, and
+     * redirects the user to GitHub's authorization page.
+     *
+     * Returns:
+     * 302 redirect to ``https://github.com/login/oauth/authorize?...``.
+     *
+     * Raises:
+     * 503: If GitHub OAuth is not configured (``GITHUB_OAUTH_CLIENT_ID``
+     * is empty).
+     * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static githubOauthStart(): CancelablePromise<void> {
+    public static githubOauthStart(): CancelablePromise<GithubOauthStartApiV1AuthGithubGetResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/auth/github',
-            errors: {
-                501: 'Successful Response'
-            }
+            url: '/api/v1/auth/github'
         });
     }
     
     /**
      * Github Oauth Callback
-     * Handle GitHub OAuth callback. Pending F7.
+     * Handle the OAuth callback from GitHub.
+     *
+     * Verifies the CSRF state parameter, exchanges the authorization code
+     * for an access token, fetches the user's GitHub profile and verified
+     * email, and upserts the user in the database.
+     *
+     * On success, sets auth cookies and CSRF cookie, then redirects to
+     * ``FRONTEND_URL?oauth=success``. On failure, redirects with
+     * ``?oauth=error=<code>``.
+     *
+     * All errors result in a redirect (never raw JSON) because the user's
+     * browser is in the middle of the OAuth redirect chain — showing JSON
+     * would be a poor UX. The frontend parses the ``oauth`` query param
+     * and displays appropriate feedback.
+     *
+     * Raises:
+     * 503: If GitHub OAuth is not configured.
+     * @param data The data for the request.
+     * @param data.code
+     * @param data.state
+     * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static githubOauthCallback(): CancelablePromise<void> {
+    public static githubOauthCallback(data: GithubOauthCallbackApiV1AuthGithubCallbackGetData = {}): CancelablePromise<GithubOauthCallbackApiV1AuthGithubCallbackGetResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/auth/github/callback',
+            query: {
+                code: data.code,
+                state: data.state
+            },
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
@@ -394,60 +529,146 @@ export class AuthService {
 export class BillingService {
     /**
      * List Plans
-     * List available plans (free, pro, team). Pending F7.
+     * List available plans (free, pro, team). No authentication required.
+     * @returns PlansResponse Successful Response
      * @throws ApiError
      */
-    public static listPlans(): CancelablePromise<void> {
+    public static listPlans(): CancelablePromise<ListPlansApiV1BillingPlansGetResponse> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/v1/billing/plans',
-            errors: {
-                501: 'Successful Response'
-            }
+            url: '/api/v1/billing/plans'
         });
     }
     
     /**
      * Subscribe
-     * Subscribe to a plan (Pro or Team). Pending F7.
+     * Create a Stripe Checkout session for subscribing to a plan.
+     *
+     * If the user does not yet have a Stripe customer ID, one is created
+     * first.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns CheckoutResponse Successful Response
      * @throws ApiError
      */
-    public static subscribe(): CancelablePromise<void> {
+    public static subscribe(data: SubscribeApiV1BillingSubscribePostData): CancelablePromise<SubscribeApiV1BillingSubscribePostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/billing/subscribe',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Customer Portal
-     * Get a Stripe customer portal link. Pending F7.
+     * Create a Stripe Customer Portal session for managing the subscription.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns PortalResponse Successful Response
      * @throws ApiError
      */
-    public static customerPortal(): CancelablePromise<void> {
+    public static customerPortal(data: CustomerPortalApiV1BillingPortalPostData): CancelablePromise<CustomerPortalApiV1BillingPortalPostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/billing/portal',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Stripe Webhook
-     * Stripe webhook receiver. Pending F7.
+     * Receive Stripe webhook events.
+     *
+     * Signature-verified and idempotent via 7-day Redis TTL on event IDs.
+     * No authentication required.
+     * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static stripeWebhook(): CancelablePromise<void> {
+    public static stripeWebhook(): CancelablePromise<StripeWebhookApiV1BillingWebhookPostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/billing/webhook',
+            url: '/api/v1/billing/webhook'
+        });
+    }
+    
+    /**
+     * Get Subscription
+     * Get the current user's active subscription.
+     *
+     * Raises 404 if no active subscription is found.
+     * @param data The data for the request.
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns SubscriptionResponse Successful Response
+     * @throws ApiError
+     */
+    public static getSubscription(data: GetSubscriptionApiV1BillingSubscriptionGetData = {}): CancelablePromise<GetSubscriptionApiV1BillingSubscriptionGetResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/billing/subscription',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * List Invoices
+     * List invoices for the current user's subscription (paginated).
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns InvoicesListResponse Successful Response
+     * @throws ApiError
+     */
+    public static listInvoices(data: ListInvoicesApiV1BillingInvoicesGetData = {}): CancelablePromise<ListInvoicesApiV1BillingInvoicesGetResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/billing/invoices',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            query: {
+                skip: data.skip,
+                limit: data.limit
+            },
+            errors: {
+                422: 'Validation Error'
             }
         });
     }
@@ -546,21 +767,29 @@ export class BuildService {
     
     /**
      * Deploy Server
-     * Deploy the server (triggers security scan first). Pending F4 + F5.
+     * Deploy the server (triggers security scan first).
      * @param data The data for the request.
      * @param data.serverId
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static deployServer(data: DeployServerApiV1ServersServerIdDeployPostData): CancelablePromise<void> {
+    public static deployServer(data: DeployServerApiV1ServersServerIdDeployPostData): CancelablePromise<DeployServerApiV1ServersServerIdDeployPostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/servers/{server_id}/deploy',
             path: {
                 server_id: data.serverId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
@@ -829,6 +1058,48 @@ export class DefaultService {
 
 export class GatewayService {
     /**
+     * List Versions
+     * List version history for a server. Pending Phase 7.
+     * @param data The data for the request.
+     * @param data.serverId
+     * @throws ApiError
+     */
+    public static listVersions(data: ListVersionsApiV1ServersServerIdVersionsGetData): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/servers/{server_id}/versions',
+            path: {
+                server_id: data.serverId
+            },
+            errors: {
+                422: 'Validation Error',
+                501: 'Successful Response'
+            }
+        });
+    }
+    
+    /**
+     * Rollback Server
+     * Roll back to a previous server version. Pending Phase 7.
+     * @param data The data for the request.
+     * @param data.serverId
+     * @throws ApiError
+     */
+    public static rollbackServer(data: RollbackServerApiV1ServersServerIdRollbackPostData): CancelablePromise<void> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/servers/{server_id}/rollback',
+            path: {
+                server_id: data.serverId
+            },
+            errors: {
+                422: 'Validation Error',
+                501: 'Successful Response'
+            }
+        });
+    }
+    
+    /**
      * Connect Panel
      * Get connection details for the gateway.
      *
@@ -958,123 +1229,115 @@ export class GatewayService {
             }
         });
     }
-    
-    /**
-     * Rollback Server
-     * Roll back to a previous server version. Pending Phase 7.
-     * @param data The data for the request.
-     * @param data.serverId
-     * @throws ApiError
-     */
-    public static rollbackServer(data: RollbackServerApiV1ServersServerIdRollbackPostData): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/v1/servers/{server_id}/rollback',
-            path: {
-                server_id: data.serverId
-            },
-            errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
-            }
-        });
-    }
-    
-    /**
-     * List Versions
-     * List version history for a server. Pending Phase 7.
-     * @param data The data for the request.
-     * @param data.serverId
-     * @throws ApiError
-     */
-    public static listVersions(data: ListVersionsApiV1ServersServerIdVersionsGetData): CancelablePromise<void> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/v1/servers/{server_id}/versions',
-            path: {
-                server_id: data.serverId
-            },
-            errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
-            }
-        });
-    }
 }
 
 export class SecurityService {
     /**
      * Trigger Scan
-     * Trigger a security scan (Celery job). Pending F5.
+     * Trigger a security scan (runs as a background Celery task).
      * @param data The data for the request.
      * @param data.serverId
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns ScanTriggerResponse Successful Response
      * @throws ApiError
      */
-    public static triggerScan(data: TriggerScanApiV1ServersServerIdSecurityScanPostData): CancelablePromise<void> {
+    public static triggerScan(data: TriggerScanApiV1ServersServerIdSecurityScanPostData): CancelablePromise<TriggerScanApiV1ServersServerIdSecurityScanPostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/servers/{server_id}/security/scan',
             path: {
                 server_id: data.serverId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Get Latest Scan
-     * Get the most recent scan result. Pending F5.
+     * Get the most recent security scan result. Returns ``null`` if no scan has been run yet.
      * @param data The data for the request.
      * @param data.serverId
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static getLatestScan(data: GetLatestScanApiV1ServersServerIdSecurityLatestGetData): CancelablePromise<void> {
+    public static getLatestScan(data: GetLatestScanApiV1ServersServerIdSecurityLatestGetData): CancelablePromise<GetLatestScanApiV1ServersServerIdSecurityLatestGetResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/servers/{server_id}/security/latest',
             path: {
                 server_id: data.serverId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * List Scans
-     * List all scans for a server (paginated). Pending F5.
+     * List security scan history for a server (paginated).
      * @param data The data for the request.
      * @param data.serverId
+     * @param data.page
+     * @param data.pageSize
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns ScanHistoryResponse Successful Response
      * @throws ApiError
      */
-    public static listScans(data: ListScansApiV1ServersServerIdSecurityScansGetData): CancelablePromise<void> {
+    public static listScans(data: ListScansApiV1ServersServerIdSecurityScansGetData): CancelablePromise<ListScansApiV1ServersServerIdSecurityScansGetResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/servers/{server_id}/security/scans',
             path: {
                 server_id: data.serverId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            query: {
+                page: data.page,
+                page_size: data.pageSize
+            },
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Acknowledge Finding
-     * Acknowledge a specific finding. Pending F5.
+     * Acknowledge a security finding (suppresses in future scans).
      * @param data The data for the request.
      * @param data.serverId
      * @param data.findingId
+     * @param data.requestBody
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns AcknowledgeResponse Successful Response
      * @throws ApiError
      */
-    public static acknowledgeFinding(data: AcknowledgeFindingApiV1ServersServerIdSecurityFindingIdAcknowledgePostData): CancelablePromise<void> {
+    public static acknowledgeFinding(data: AcknowledgeFindingApiV1ServersServerIdSecurityFindingIdAcknowledgePostData): CancelablePromise<AcknowledgeFindingApiV1ServersServerIdSecurityFindingIdAcknowledgePostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/servers/{server_id}/security/{finding_id}/acknowledge',
@@ -1082,51 +1345,105 @@ export class SecurityService {
                 server_id: data.serverId,
                 finding_id: data.findingId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Remove Acknowledgment
+     * Remove an acknowledgment for a finding.
+     * @param data The data for the request.
+     * @param data.serverId
+     * @param data.findingId
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns void Successful Response
+     * @throws ApiError
+     */
+    public static removeAcknowledgment(data: RemoveAcknowledgmentApiV1ServersServerIdSecurityFindingIdAcknowledgeDeleteData): CancelablePromise<RemoveAcknowledgmentApiV1ServersServerIdSecurityFindingIdAcknowledgeDeleteResponse> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/v1/servers/{server_id}/security/{finding_id}/acknowledge',
+            path: {
+                server_id: data.serverId,
+                finding_id: data.findingId
+            },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            errors: {
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Export Report
-     * Export the latest scan as JSON. Pending F5.
+     * Export the latest scan as a full security report.
      * @param data The data for the request.
      * @param data.serverId
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns SecurityReport Successful Response
      * @throws ApiError
      */
-    public static exportReport(data: ExportReportApiV1ServersServerIdSecurityReportJsonGetData): CancelablePromise<void> {
+    public static exportReport(data: ExportReportApiV1ServersServerIdSecurityReportJsonGetData): CancelablePromise<ExportReportApiV1ServersServerIdSecurityReportJsonGetResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/servers/{server_id}/security/report.json',
             path: {
                 server_id: data.serverId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * List Acknowledgments
-     * List all acknowledgments for a server. Pending F5.
+     * List all acknowledgments for a server.
      * @param data The data for the request.
      * @param data.serverId
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns unknown Successful Response
      * @throws ApiError
      */
-    public static listAcknowledgments(data: ListAcknowledgmentsApiV1ServersServerIdSecurityAcknowledgmentsGetData): CancelablePromise<void> {
+    public static listAcknowledgments(data: ListAcknowledgmentsApiV1ServersServerIdSecurityAcknowledgmentsGetData): CancelablePromise<ListAcknowledgmentsApiV1ServersServerIdSecurityAcknowledgmentsGetResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/servers/{server_id}/security/acknowledgments',
             path: {
                 server_id: data.serverId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
@@ -1289,6 +1606,42 @@ export class ServersService {
             headers: {
                 authorization: data.authorization
             },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Duplicate Server
+     * Duplicate an existing MCP server.
+     *
+     * Creates a new server with the same configuration (tools_config)
+     * but resets version, stats, and status. Credentials are NOT copied.
+     * The new server starts in ``building`` status.
+     * @param data The data for the request.
+     * @param data.serverId
+     * @param data.requestBody
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns MCPServerResponse Successful Response
+     * @throws ApiError
+     */
+    public static duplicateServer(data: DuplicateServerApiV1ServersServerIdDuplicatePostData): CancelablePromise<DuplicateServerApiV1ServersServerIdDuplicatePostResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/servers/{server_id}/duplicate',
+            path: {
+                server_id: data.serverId
+            },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: 'Validation Error'
             }
@@ -1496,132 +1849,256 @@ export class SpecsService {
 export class TeamService {
     /**
      * Get Team
-     * Get the current user's team. Pending F7.
+     * Get the current user's team.
+     * @param data The data for the request.
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns TeamResponse Successful Response
      * @throws ApiError
      */
-    public static getTeam(): CancelablePromise<void> {
+    public static getTeam(data: GetTeamApiV1TeamGetData = {}): CancelablePromise<GetTeamApiV1TeamGetResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/team',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Create Team
-     * Create a new team. Pending F7.
+     * Create a new team for the current user.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns TeamResponse Successful Response
      * @throws ApiError
      */
-    public static createTeam(): CancelablePromise<void> {
+    public static createTeam(data: CreateTeamApiV1TeamPostData): CancelablePromise<CreateTeamApiV1TeamPostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/team',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Update Team
-     * Update team name/plan. Pending F7.
+     * Update team name. Admin only.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns TeamResponse Successful Response
      * @throws ApiError
      */
-    public static updateTeam(): CancelablePromise<void> {
+    public static updateTeam(data: UpdateTeamApiV1TeamPatchData): CancelablePromise<UpdateTeamApiV1TeamPatchResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
             url: '/api/v1/team',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Invite Member
-     * Invite a user by email. Pending F7.
+     * Invite a user by email. Admin only.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns TeamInvitationResponse Successful Response
      * @throws ApiError
      */
-    public static inviteMember(): CancelablePromise<void> {
+    public static inviteMember(data: InviteMemberApiV1TeamInvitePostData): CancelablePromise<InviteMemberApiV1TeamInvitePostResponse> {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/api/v1/team/invite',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Accept Invitation
+     * Accept a team invitation by token.
+     * @param data The data for the request.
+     * @param data.requestBody
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns TeamMemberResponse Successful Response
+     * @throws ApiError
+     */
+    public static acceptInvitation(data: AcceptInvitationApiV1TeamAcceptPostData): CancelablePromise<AcceptInvitationApiV1TeamAcceptPostResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/team/accept',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * List Members
-     * List all team members. Pending F7.
+     * List all team members.
+     * @param data The data for the request.
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns TeamMemberResponse Successful Response
      * @throws ApiError
      */
-    public static listMembers(): CancelablePromise<void> {
+    public static listMembers(data: ListMembersApiV1TeamMembersGetData = {}): CancelablePromise<ListMembersApiV1TeamMembersGetResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/team/members',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Update Member
-     * Update a member's role. Pending F7.
+     * Update a member's role. Admin only.
      * @param data The data for the request.
      * @param data.userId
+     * @param data.requestBody
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns TeamMemberResponse Successful Response
      * @throws ApiError
      */
-    public static updateMember(data: UpdateMemberApiV1TeamMembersUserIdPatchData): CancelablePromise<void> {
+    public static updateMember(data: UpdateMemberApiV1TeamMembersUserIdPatchData): CancelablePromise<UpdateMemberApiV1TeamMembersUserIdPatchResponse> {
         return __request(OpenAPI, {
             method: 'PATCH',
             url: '/api/v1/team/members/{user_id}',
             path: {
                 user_id: data.userId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            body: data.requestBody,
+            mediaType: 'application/json',
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Remove Member
-     * Remove a member. Pending F7.
+     * Remove a team member. Admin only, or self-removal.
      * @param data The data for the request.
      * @param data.userId
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns void Successful Response
      * @throws ApiError
      */
-    public static removeMember(data: RemoveMemberApiV1TeamMembersUserIdDeleteData): CancelablePromise<void> {
+    public static removeMember(data: RemoveMemberApiV1TeamMembersUserIdDeleteData): CancelablePromise<RemoveMemberApiV1TeamMembersUserIdDeleteResponse> {
         return __request(OpenAPI, {
             method: 'DELETE',
             url: '/api/v1/team/members/{user_id}',
             path: {
                 user_id: data.userId
             },
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
             errors: {
-                422: 'Validation Error',
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }
     
     /**
      * Audit Log
-     * List audit log entries. Pending F7.
+     * List audit log entries. Admin only.
+     * @param data The data for the request.
+     * @param data.skip
+     * @param data.limit
+     * @param data.action
+     * @param data.authorization
+     * @param data.accessToken
+     * @returns PaginatedAuditLogResponse Successful Response
      * @throws ApiError
      */
-    public static auditLog(): CancelablePromise<void> {
+    public static auditLog(data: AuditLogApiV1TeamAuditLogGetData = {}): CancelablePromise<AuditLogApiV1TeamAuditLogGetResponse> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/v1/team/audit-log',
+            cookies: {
+                access_token: data.accessToken
+            },
+            headers: {
+                authorization: data.authorization
+            },
+            query: {
+                skip: data.skip,
+                limit: data.limit,
+                action: data.action
+            },
             errors: {
-                501: 'Successful Response'
+                422: 'Validation Error'
             }
         });
     }

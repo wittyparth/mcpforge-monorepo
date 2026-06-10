@@ -265,23 +265,40 @@ export interface BuildStartRequest {
 }
 
 /**
- * An SSE event emitted during the server build pipeline (legacy format).
+ * An SSE event emitted during the server build pipeline.
  *
  * The backend emits these over `GET /api/v1/servers/{id}/build-status`
- * using Server-Sent Events with `data: {"stage":"...","progress":N,"message":"..."}`.
+ * using Server-Sent Events. The AI Description Engine emits events with
+ * `event` field (start, ai_progress, tool_enhanced, tool_failed, ai_complete,
+ * error, done). The hook normalizes these to a `stage` for the UI stepper.
  */
 export interface BuildStatusEvent {
-  /** Current pipeline stage (legacy) or AI event type (new) */
+  /** Normalized pipeline stage for UI stepper (derived from event if needed) */
   stage?: BuildStage;
+  /** Raw event type from backend */
   event?: string;
-  /** Progress percentage (0–100) or number of tools completed */
+  /** Progress percentage (0–100) or tool index */
   progress?: number;
-  /** Human-readable status message */
-  message?: string;
+  /** Total number of tools (for AI progress events) */
+  total?: number;
   /** Tool name (AI events) */
   tool_name?: string;
-  /** Total number of tools (AI events) */
-  total?: number;
+  /** Human-readable status message */
+  message?: string;
+  /** Quality score for AI-enhanced tool (0–100) */
+  quality_score?: number;
+  /** Cost in cents for this tool enhancement */
+  cost_cents?: number;
+  /** Error message for failed events */
+  error?: string;
+  /** Number of successful enhancements */
+  successful?: number;
+  /** Number of failed enhancements */
+  failed?: number;
+  /** Server ID */
+  server_id?: string;
+  /** Timestamp */
+  timestamp?: string;
 }
 
 // ── F2: AI Description Engine Types ─────────────────────────────
@@ -384,4 +401,349 @@ export interface PauseResult {
   status: "paused" | "active";
   paused_at: string | null;
   estimated_propagation_seconds: number;
+}
+
+// ── F5: Security Scanner Types ──────────────────────────────────
+
+/** Finding ID (stable rule identifier) */
+export type FindingId =
+  | "SSRF_URL_PARAM"
+  | "NO_AUTH_DELETE"
+  | "CREDENTIAL_IN_RESPONSE"
+  | "PROMPT_INJECTION_DESC"
+  | "NO_AUTH_WRITES"
+  | "UNTAGGED_ENDPOINTS"
+  | "DEPRECATED_HTTP_METHODS"
+  | "LARGE_TOOL_SET";
+
+/** Finding severity levels */
+export type FindingSeverity = "critical" | "high" | "medium" | "info";
+
+/** A single security finding from the scanner */
+export interface Finding {
+  id: string;
+  severity: FindingSeverity;
+  title: string;
+  description: string;
+  affected_tools: string[];
+  remediation: string;
+  references: string[];
+}
+
+/** Response from triggering a scan */
+export interface ScanTriggerResponse {
+  scan_id: string;
+  scan_status: string;
+  message: string;
+}
+
+/** Response from GET /api/v1/servers/{id}/security/latest */
+export interface ScanResultResponse {
+  id: string;
+  server_id: string;
+  scan_status: "running" | "completed" | "failed";
+  findings: Finding[];
+  critical_count: number;
+  high_count: number;
+  medium_count: number;
+  info_count: number;
+  scanned_at: string;
+  scan_duration_ms: number | null;
+}
+
+/** Response from GET /api/v1/servers/{id}/security (paginated) */
+export interface ScanHistoryResponse {
+  items: ScanResultResponse[];
+  total: number;
+  page: number;
+  page_size: number;
+  next_page: number | null;
+}
+
+/** Request body for acknowledge */
+export interface AcknowledgeRequest {
+  note?: string | null;
+}
+
+/** Response from acknowledge endpoint */
+export interface AcknowledgeResponse {
+  server_id: string;
+  finding_id: string;
+  acknowledged_at: string;
+}
+
+/** Response from acknowledgment list */
+export interface AckListResponse {
+  items: AcknowledgeResponse[];
+  total: number;
+}
+
+/** Response when deploy is blocked by CRITICAL findings */
+export interface DeployBlockedResponse {
+  blocked: boolean;
+  reason: string;
+  critical_findings: Finding[];
+  scan_id: string | null;
+}
+
+/** JSON report for export/download */
+export interface SecurityReport {
+  server_id: string;
+  server_name: string;
+  generated_at: string;
+  scan: ScanResultResponse | null;
+  acknowledgments: AcknowledgeResponse[];
+  summary: string;
+}
+
+// ── F7: Team Types ────────────────────────────────────────────────
+
+/** Team member roles */
+export type TeamRole = "admin" | "editor" | "viewer";
+
+/** Response from GET /api/v1/team */
+export interface TeamResponse {
+  id: string;
+  name: string;
+  owner_id: string;
+  plan: string;
+  created_at: string;
+  member_count: number;
+  current_user_role: TeamRole;
+}
+
+/** Response from GET /api/v1/team/members (single member) */
+export interface TeamMemberResponse {
+  user_id: string;
+  email: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  role: TeamRole;
+  joined_at: string;
+}
+
+/** Response from POST /api/v1/team/invite */
+export interface TeamInvitationCreateResponse {
+  id: string;
+  email: string;
+  role: TeamRole;
+  token: string;
+  expires_at: string;
+  created_at: string;
+}
+
+/** A single audit log entry */
+export interface AuditLogResponse {
+  id: string;
+  user_id: string;
+  user_email: string;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  metadata: Record<string, unknown> | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
+/** Paginated audit log response */
+export interface PaginatedAuditLogResponse {
+  items: AuditLogResponse[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
+// ── F7: Billing Types ────────────────────────────────────────────
+
+export interface PlanInfo {
+  id: string;
+  name: string;
+  price_cents: number;
+  currency: string;
+  period: "monthly" | "yearly";
+  features: string[];
+  popular: boolean;
+  min_seats: number | null;
+}
+
+export interface PlansResponse {
+  plans: PlanInfo[];
+}
+
+export interface SubscribeRequest {
+  plan: "pro" | "team";
+  billing_period: "monthly" | "yearly";
+  seats?: number;
+}
+
+export interface CheckoutResponse {
+  checkout_url: string;
+  session_id: string;
+}
+
+export interface PortalRequest {
+  return_url?: string;
+}
+
+export interface PortalResponse {
+  portal_url: string;
+}
+
+export type SubscriptionStatus =
+  | "active"
+  | "trialing"
+  | "past_due"
+  | "canceled"
+  | "incomplete"
+  | "unpaid";
+
+export interface SubscriptionResponse {
+  id: string;
+  plan: string;
+  status: SubscriptionStatus;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end: boolean;
+  seats: number;
+}
+
+export interface InvoiceResponse {
+  id: string;
+  amount_cents: number;
+  currency: string;
+  status: "paid" | "open" | "uncollectible" | "void";
+  invoice_pdf_url: string | null;
+  hosted_invoice_url: string | null;
+  created_at: string;
+}
+
+export interface InvoicesListResponse {
+  items: InvoiceResponse[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
+// ── F7: API Key Types ──────────────────────────────────────────────
+
+/** API key scope values */
+export type ApiKeyScope =
+  | "servers:read"
+  | "servers:write"
+  | "analytics:read"
+  | "admin";
+
+/** A single API key (never includes plaintext after creation) */
+export interface ApiKeyResponse {
+  id: string;
+  name: string;
+  key_prefix: string;
+  scopes: ApiKeyScope[];
+  last_used_at: string | null;
+  expires_at: string | null;
+  revoked_at: string | null;
+  created_at: string;
+}
+
+/** Response from POST /api/v1/api-keys — plaintext shown ONCE */
+export interface ApiKeyCreateResponse {
+  key: ApiKeyResponse;
+  plaintext_key: string;
+}
+
+/** Response from GET /api/v1/api-keys */
+export interface ApiKeyListResponse {
+  items: ApiKeyResponse[];
+  total: number;
+}
+
+// ── F7: Server Management Types (Duplicate, Versions, Rollback) ────
+
+/** Request body for POST /api/v1/servers/{id}/duplicate */
+export interface DuplicateServerRequest {
+  new_name: string;
+  new_slug?: string | null;
+}
+
+/** A single server version entry */
+export interface ServerVersionResponse {
+  id: string;
+  version: number;
+  change_note: string | null;
+  changed_by: string | null;
+  changed_by_email: string | null;
+  created_at: string;
+}
+
+/** Response from GET /api/v1/servers/{id}/versions (paginated) */
+export interface ServerVersionsResponse {
+  items: ServerVersionResponse[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
+/** Request body for POST /api/v1/servers/{id}/rollback */
+export interface RollbackRequest {
+  version: number;
+}
+
+// ── F6: Analytics Types ────────────────────────────────────────────
+
+/** Top-line numbers for a server in a time range. */
+export interface AnalyticsOverview {
+  server_id: string;
+  range: "7d" | "30d" | "90d";
+  total_calls: number;
+  total_errors: number;
+  error_rate: number; // 0-1
+  unique_clients: number;
+  avg_latency_ms: number;
+  p95_latency_ms: number;
+}
+
+/** Per-tool row in the breakdown table. */
+export interface ToolBreakdownItem {
+  tool_name: string;
+  call_count: number;
+  error_count: number;
+  avg_latency_ms: number;
+  selection_rate: number; // 0-1
+}
+
+/** A sanitized error row. */
+export interface ErrorLogItem {
+  called_at: string;
+  tool_name: string;
+  error_type: string;
+  error_msg: string;
+  client_name: string | null;
+}
+
+/** A single time-series bucket. */
+export interface TimeSeriesPoint {
+  bucket_start: string;
+  call_count: number;
+  error_count: number;
+  avg_latency_ms: number | null;
+}
+
+/** A row in the client breakdown. */
+export interface ClientBreakdownItem {
+  client_name: string;
+  call_count: number;
+  last_seen: string;
+}
+
+/** Description performance panel row. */
+export interface DescriptionPerformance {
+  tool_name: string;
+  edited_at: string | null;
+  edit_source: "ai" | "user" | "revert" | null;
+  before_call_count: number;
+  after_call_count: number;
+  delta_pct: number | null;
+  message: string;
+  no_edit: boolean;
 }

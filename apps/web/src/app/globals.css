@@ -55,6 +55,64 @@
   }
 }
 
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* ── JSON syntax highlighting for JsonViewer ──────────────────── */
+.json-key {
+  color: oklch(0.546 0.245 262.881);
+}
+
+.dark .json-key {
+  color: oklch(0.7 0.18 262.881);
+}
+
+.json-string {
+  color: oklch(0.577 0.245 27.325);
+}
+
+.dark .json-string {
+  color: oklch(0.8 0.15 27.325);
+}
+
+.json-number {
+  color: oklch(0.6 0.118 184.704);
+}
+
+.dark .json-number {
+  color: oklch(0.75 0.12 184.704);
+}
+
+.json-boolean {
+  color: oklch(0.627 0.265 303.9);
+}
+
+.dark .json-boolean {
+  color: oklch(0.78 0.18 303.9);
+}
+
+.json-punctuation {
+  color: oklch(0.556 0.028 286.375);
+}
+
+.dark .json-punctuation {
+  color: oklch(0.708 0.01 286.375);
+}
+
+.json-line {
+  display: block;
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);

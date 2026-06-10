@@ -7,18 +7,19 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowLeft, Trash2, Sparkles, Search, Pencil, Plus, Play, Activity,
-  BarChart3, Globe, Key, Check, X, AlertTriangle,
+  BarChart3, Globe, Key, Check, X, AlertTriangle, Shield, History,
 } from "lucide-react";
 
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ServerConfigForm } from "@/components/builder/server-config-form";
 import { ToolRow } from "@/components/builder/tool-row";
 import { CredentialInput } from "@/components/builder/credential-input";
 import { CredentialTestResult } from "@/components/builder/credential-test-result";
@@ -28,7 +29,8 @@ import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { ConnectPanel } from "@/components/server/connect-panel";
 import { PauseResumeToggle } from "@/components/server/pause-resume-toggle";
 import { DeployButton } from "@/components/server/deploy-button";
-import { useServer } from "@/hooks/use-servers";
+import { VersionsTab } from "@/components/server/versions-tab";
+import { useServer, useUpdateServer } from "@/hooks/use-servers";
 import { useTools, useUpdateTool, useEnhanceTools } from "@/hooks/use-tools";
 import { useCredentials, useCreateCredential, useTestCredential, useDeleteCredential } from "@/hooks/use-credentials";
 import { api, ApiClientError } from "@/lib/api";
@@ -66,6 +68,8 @@ export default function ServerDetailPage({ params }: { params: Promise<{ id: str
   const createCred = useCreateCredential(id);
   const testCred = useTestCredential(id);
   const deleteCred = useDeleteCredential(id);
+
+  const updateSrv = useUpdateServer(id);
 
   const deleteSrv = useMutation({
     mutationFn: () => api.servers.delete(id),
@@ -149,7 +153,13 @@ export default function ServerDetailPage({ params }: { params: Promise<{ id: str
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <CopyToClipboard value={mcpUrl} label="MCP endpoint URL" />
-          <Button variant="outline" size="sm" disabled><Play className="h-4 w-4" />Open in Playground</Button>
+          {tools.length > 0 && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/dashboard/servers/${id}/playground`}>
+                <Play className="h-4 w-4" />Open in Playground
+              </Link>
+            </Button>
+          )}
           <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}><Trash2 className="h-4 w-4" />Delete</Button>
         </div>
       </div>
@@ -160,6 +170,14 @@ export default function ServerDetailPage({ params }: { params: Promise<{ id: str
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="tools">Tools</TabsTrigger>
           <TabsTrigger value="credentials">Credentials</TabsTrigger>
+          <TabsTrigger value="security">
+            <Shield className="mr-1.5 h-3.5 w-3.5" />
+            Security
+          </TabsTrigger>
+          <TabsTrigger value="versions">
+            <History className="mr-1.5 h-3.5 w-3.5" />
+            Versions
+          </TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
@@ -232,35 +250,33 @@ export default function ServerDetailPage({ params }: { params: Promise<{ id: str
             <EmptyState title={toolSearch.trim() ? "No matching tools" : "No tools generated yet"}
               description={toolSearch.trim() ? "Try a different search term" : "Tools will appear here after generating from an OpenAPI spec"} icon={Search} />
           ) : (
-            <ScrollArea className="max-h-[600px]">
-              <div className="space-y-1 pr-4">
+            <div className="overflow-y-auto max-h-[600px] rounded-lg border bg-card">
+              <div className="divide-y divide-border/50">
                 {filtered.map(tool => (
-                  <div key={tool.name} className="rounded-lg border bg-card">
+                  <div key={tool.name}>
                     <ToolRow tool={tool} selected={selTools.has(tool.name)} onToggle={() => {
                       const next = new Set(selTools);
                       if (next.has(tool.name)) { next.delete(tool.name); } else { next.add(tool.name); }
                       setSelTools(next);
                     }} />
-                    <div className="flex items-center justify-between border-t border-border/50 px-3 py-2">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between px-3 py-2 bg-muted/10">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
                         {editingTool === tool.name ? (
-                          <div className="flex items-center gap-2">
-                            <Input value={editDesc} onChange={e => setEditDesc(e.target.value)} className="h-7 w-64 text-xs" placeholder="Tool description..." />
-                            <button onClick={() => saveEdit(tool.name)} className="rounded p-0.5 text-emerald-500 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" aria-label="Save"><Check className="h-3.5 w-3.5" /></button>
-                            <button onClick={() => setEditingTool(null)} className="rounded p-0.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" aria-label="Cancel"><X className="h-3.5 w-3.5" /></button>
+                          <div className="flex items-center gap-2 w-full">
+                            <Input value={editDesc} onChange={e => setEditDesc(e.target.value)} className="h-7 flex-1 text-xs" placeholder="Tool description..." />
+                            <button onClick={() => saveEdit(tool.name)} className="shrink-0 rounded p-0.5 text-emerald-500 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" aria-label="Save"><Check className="h-3.5 w-3.5" /></button>
+                            <button onClick={() => setEditingTool(null)} className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" aria-label="Cancel"><X className="h-3.5 w-3.5" /></button>
                           </div>
                         ) : (
-                          <>
-                            <span className="text-xs text-muted-foreground line-clamp-1">{tool.description || <span className="italic">No description</span>}</span>
-                            <button onClick={() => startEdit(tool)} className="rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" aria-label={`Edit ${tool.name}`}><Pencil className="h-3 w-3" /></button>
-                          </>
+                          <span className="text-xs text-muted-foreground line-clamp-1 flex-1">{tool.description || <span className="italic">No description</span>}</span>
                         )}
+                        <button onClick={() => startEdit(tool)} className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" aria-label={`Edit ${tool.name}`}><Pencil className="h-3 w-3" /></button>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           )}
         </TabsContent>
 
@@ -321,20 +337,101 @@ export default function ServerDetailPage({ params }: { params: Promise<{ id: str
             ))}
           </div>
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div><CardTitle>Usage Analytics</CardTitle><CardDescription>Detailed metrics and charts for tool usage</CardDescription></div>
-              <BarChart3 className="h-5 w-5 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle>Usage Analytics</CardTitle>
+              <CardDescription>
+                Detailed metrics and charts for tool usage, with privacy-first
+                aggregation. Parameter values are never stored.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-              <BarChart3 className="h-12 w-12 text-muted-foreground/30" />
-              <h3 className="mt-4 text-lg font-medium">Analytics coming in Phase 7</h3>
-              <p className="mt-2 max-w-md text-sm text-muted-foreground">Detailed usage analytics, request logs, and performance metrics will be available in a future release.</p>
+            <CardContent className="flex flex-col items-start gap-4">
+              <p className="text-sm text-muted-foreground">
+                The full analytics dashboard includes per-tool breakdown, time
+                series charts, error log, client breakdown, and a unique
+                description-performance tracker that measures whether AI-enhanced
+                descriptions actually increase call rates.
+              </p>
+              <Button asChild size="sm">
+                <Link href={`/dashboard/servers/${id}/analytics`}>
+                  <BarChart3 className="mr-1.5 h-4 w-4" />
+                  Open Analytics Dashboard
+                </Link>
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* ══ Security ══ */}
+        <TabsContent value="security" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Security Scanner</CardTitle>
+              <CardDescription>
+                Run security scans to detect CRITICAL, HIGH, MEDIUM, and INFO
+                issues before deployment. CRITICAL findings block deployment.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-start gap-4">
+              <p className="text-sm text-muted-foreground">
+                The security scanner analyzes your server configuration against
+                8 deterministic rules covering SSRF, authentication, credential
+                leaks, prompt injection, and more.
+              </p>
+              <div className="flex items-center gap-3">
+                <Button asChild size="sm">
+                  <Link href={`/dashboard/servers/${id}/security`}>
+                    <Shield className="mr-1.5 h-4 w-4" />
+                    Open Security Dashboard
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ══ Versions ══ */}
+        <TabsContent value="versions" className="space-y-6">
+          <VersionsTab
+            serverId={id}
+            serverName={server.name}
+            currentVersion={server.version}
+          />
+        </TabsContent>
+
         {/* ══ Settings ══ */}
         <TabsContent value="settings" className="space-y-6">
+          {/* ── Server Configuration ── */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Globe className="h-5 w-5 text-primary" />
+                Server Configuration
+              </CardTitle>
+              <CardDescription>
+                Edit your server name, description, base URL, and transport mode.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ServerConfigForm
+                mode="edit"
+                defaultValues={{
+                  name: server.name,
+                  slug: server.slug,
+                  description: server.description ?? "",
+                  base_url: server.base_url,
+                  transport_mode: server.transport_mode as "sse" | "streamable_http" | "both",
+                }}
+                onSubmit={async (data) => {
+                  await updateSrv.mutateAsync(data);
+                }}
+                isSubmitting={updateSrv.isPending}
+              />
+            </CardContent>
+          </Card>
+
+          <Separator />
+
+          {/* ── Gateway URL ── */}
           <Card>
             <CardHeader><CardTitle>Gateway URL</CardTitle><CardDescription>Connect your MCP client to this server</CardDescription></CardHeader>
             <CardContent>
@@ -342,6 +439,7 @@ export default function ServerDetailPage({ params }: { params: Promise<{ id: str
             </CardContent>
           </Card>
 
+          {/* ── Server Status ── */}
           <Card>
             <CardHeader><CardTitle>Server Status</CardTitle><CardDescription>Pause or resume the MCP server gateway</CardDescription></CardHeader>
             <CardContent>
@@ -349,6 +447,7 @@ export default function ServerDetailPage({ params }: { params: Promise<{ id: str
             </CardContent>
           </Card>
 
+          {/* ── Deployment ── */}
           <Card>
             <CardHeader><CardTitle>Deployment</CardTitle><CardDescription>Deploy your server to make it available via MCP</CardDescription></CardHeader>
             <CardContent>

@@ -27,7 +27,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { EmptyState } from "@/components/shared/empty-state";
 import { LoadingSpinner } from "@/components/shared/loading-spinner";
 import { ToolRow } from "@/components/builder/tool-row";
@@ -296,10 +295,10 @@ export default function ServerToolsPage({
               icon={Search}
             />
           ) : (
-            <ScrollArea className="max-h-[600px]">
-              <div className="space-y-1 pr-4">
+            <div className="overflow-y-auto max-h-[600px] rounded-lg border bg-card">
+              <div className="divide-y divide-border/50">
                 {filtered.map((tool) => (
-                  <div key={tool.name} className="rounded-lg border bg-card">
+                  <div key={tool.name}>
                     <ToolRow
                       tool={tool}
                       selected={selTools.has(tool.name)}
@@ -313,26 +312,26 @@ export default function ServerToolsPage({
                         setSelTools(next);
                       }}
                     />
-                    <div className="flex items-center justify-between border-t border-border/50 px-3 py-2">
-                      <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between px-3 py-2 bg-muted/10">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
                         {editingTool === tool.name ? (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 w-full">
                             <Input
                               value={editDesc}
                               onChange={(e) => setEditDesc(e.target.value)}
-                              className="h-7 w-64 text-xs"
+                              className="h-7 flex-1 text-xs"
                               placeholder="Tool description..."
                             />
                             <button
                               onClick={() => saveEdit(tool.name)}
-                              className="rounded p-0.5 text-emerald-500 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                              className="shrink-0 rounded p-0.5 text-emerald-500 hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                               aria-label="Save"
                             >
                               <Check className="h-3.5 w-3.5" />
                             </button>
                             <button
                               onClick={cancelEdit}
-                              className="rounded p-0.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                              className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                               aria-label="Cancel"
                             >
                               <X className="h-3.5 w-3.5" />
@@ -340,14 +339,14 @@ export default function ServerToolsPage({
                           </div>
                         ) : (
                           <>
-                            <span className="text-xs text-muted-foreground line-clamp-1">
+                            <span className="text-xs text-muted-foreground line-clamp-1 flex-1">
                               {tool.description || (
                                 <span className="italic">No description</span>
                               )}
                             </span>
                             <button
                               onClick={() => startEdit(tool)}
-                              className="rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                              className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                               aria-label={`Edit ${tool.name}`}
                             >
                               <Pencil className="h-3 w-3" />
@@ -355,8 +354,8 @@ export default function ServerToolsPage({
                           </>
                         )}
                       </div>
-                      {tool.warnings.length > 0 && (
-                        <Badge variant="outline" className="text-[10px]">
+                      {tool.warnings && tool.warnings.length > 0 && (
+                        <Badge variant="outline" className="text-[10px] shrink-0 ml-2">
                           {tool.warnings.length} warning
                           {tool.warnings.length > 1 ? "s" : ""}
                         </Badge>
@@ -365,7 +364,7 @@ export default function ServerToolsPage({
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           )}
         </TabsContent>
       </Tabs>

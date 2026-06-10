@@ -15,11 +15,15 @@ export function useConnectPanel(serverId: string) {
 export function useTestConnection(serverId: string) {
   return useMutation({
     mutationFn: () => api.servers.testConnection(serverId),
-    onSuccess: (data: any) => {
-      if (data?.success) {
+    onSuccess: (data: unknown) => {
+      const result = data as Record<string, unknown> | null;
+      if (result?.success) {
         toast.success("Connection successful!");
       } else {
-        toast.error(data?.error ?? "Connection test failed");
+        toast.error(
+          (typeof result?.error === "string" ? result.error : null) ??
+            "Connection test failed",
+        );
       }
     },
     onError: (error: unknown) => {

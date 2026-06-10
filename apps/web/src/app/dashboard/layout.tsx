@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCurrentUser } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
@@ -10,7 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
-import { useState } from "react";
+import { VerifyEmailBanner } from "@/components/auth/verify-email-banner";
+import { listenForAuthExpired } from "@/lib/auth-refresh";
 
 export default function DashboardLayout({
   children,
@@ -22,11 +23,19 @@ export default function DashboardLayout({
   const { isLoaded } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const goToLogin = useCallback(() => {
+    router.push("/login");
+  }, [router]);
+
   useEffect(() => {
     if (isLoaded && !isLoading && !user) {
-      router.push("/login");
+      goToLogin();
     }
-  }, [isLoaded, isLoading, user, router]);
+  }, [isLoaded, isLoading, user, goToLogin]);
+
+  useEffect(() => {
+    return listenForAuthExpired(goToLogin);
+  }, [goToLogin]);
 
   if (isLoading) {
     return (
@@ -71,6 +80,7 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="flex flex-1 flex-col">
         <DashboardHeader onMenuClick={() => setMobileMenuOpen(true)} />
+        {!user.email_verified && <VerifyEmailBanner />}
         <main className="flex-1 p-4 lg:p-6">{children}</main>
       </div>
     </div>

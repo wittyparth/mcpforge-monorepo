@@ -7,13 +7,18 @@ import {
   AlertCircle,
   ArrowLeft,
   Check,
+  ChevronRight,
   FileJson,
-  Loader2,
+  Flame,
   Play,
   RotateCcw,
   Server,
   Settings,
   Sparkles,
+  Terminal,
+  Wand2,
+  XCircle,
+  Zap,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -331,7 +336,6 @@ export default function NewServerWizardPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      {/* Back / Cancel link */}
       {step < 4 && (
         <Link
           href={step === 1 ? "/dashboard/servers" : "#"}
@@ -348,10 +352,8 @@ export default function NewServerWizardPage() {
         </Link>
       )}
 
-      {/* Wizard stepper */}
       <WizardStepper currentStep={step} onStepClick={handleStepClick} />
 
-      {/* ════════════════ Step 1: Spec Input ════════════════ */}
       {step === 1 && (
         <section aria-label="Step 1: Import OpenAPI Spec">
           <SpecInput
@@ -361,7 +363,6 @@ export default function NewServerWizardPage() {
         </section>
       )}
 
-      {/* ════════════════ Step 2: Tool Selection ════════════ */}
       {step === 2 && specResponse && (
         <section aria-label="Step 2: Select Tools">
           <ToolWorkspace
@@ -376,7 +377,6 @@ export default function NewServerWizardPage() {
         </section>
       )}
 
-      {/* ════════════════ Step 3: Config + Credentials ══════ */}
       {step === 3 && specResponse && (
         <section aria-label="Step 3: Configure Server" className="space-y-6">
           <Card>
@@ -412,7 +412,6 @@ export default function NewServerWizardPage() {
             </div>
           )}
 
-          {/* Post-creation: credentials + continue */}
           {isServerCreated && (
             <>
               <Separator className="my-2" />
@@ -451,127 +450,326 @@ export default function NewServerWizardPage() {
         </section>
       )}
 
-      {/* ════════════════ Step 4: Build Progress ════════════ */}
       {step === 4 && server && (
         <section aria-label="Step 4: Build Progress" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Sparkles className="h-5 w-5 text-primary" />
-                Building your MCP server
-              </CardTitle>
-              <CardDescription>
-                {!isBuildComplete &&
-                  !isBuildError &&
-                  "Your server is being built. This usually takes a few seconds."}
-                {isBuildComplete && "Your MCP server is ready to use!"}
-                {isBuildError && "Something went wrong during the build."}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Step indicator */}
+          <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-card via-card to-muted/50 shadow-xl">
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary via-purple-500 to-emerald-500 opacity-80" />
+
+            <div className="p-6 space-y-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <div className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-xl",
+                        isBuildComplete
+                          ? "bg-emerald-500/10 text-emerald-500"
+                          : isBuildError
+                            ? "bg-destructive/10 text-destructive"
+                            : "bg-primary/10 text-primary"
+                      )}>
+                        {isBuildComplete ? (
+                          <Check className="h-5 w-5" />
+                        ) : isBuildError ? (
+                          <XCircle className="h-5 w-5" />
+                        ) : (
+                          <Sparkles className="h-5 w-5 animate-pulse" />
+                        )}
+                      </div>
+                      {!isBuildComplete && !isBuildError && (
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-primary" />
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-semibold tracking-tight">
+                        {isBuildComplete
+                          ? "Build Complete"
+                          : isBuildError
+                            ? "Build Failed"
+                            : "Building MCP Server"}
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {isBuildComplete
+                          ? "Your server is ready to use"
+                          : isBuildError
+                            ? "Something went wrong"
+                            : "AI-enhancing tool descriptions…"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold tabular-nums tracking-tight">
+                    {buildStatus.status?.progress ?? 0}%
+                  </div>
+                  <div className="text-xs text-muted-foreground font-medium">
+                    {buildEvents.length} event{buildEvents.length !== 1 ? "s" : ""}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="font-medium text-foreground flex items-center gap-2">
+                    {currentStage === "parsing" && <Zap className="h-3.5 w-3.5 text-blue-500" />}
+                    {currentStage === "generating" && <Wand2 className="h-3.5 w-3.5 text-purple-500" />}
+                    {currentStage === "testing" && <Flame className="h-3.5 w-3.5 text-amber-500" />}
+                    {currentStage === "deploying" && <Server className="h-3.5 w-3.5 text-cyan-500" />}
+                    {currentStage === "complete" && <Check className="h-3.5 w-3.5 text-emerald-500" />}
+                    {currentStage === "error" && <AlertCircle className="h-3.5 w-3.5 text-destructive" />}
+                    {currentStage
+                      ? currentStage === "complete"
+                        ? "Complete"
+                        : currentStage === "error"
+                          ? "Error"
+                          : currentStage.charAt(0).toUpperCase() + currentStage.slice(1)
+                      : "Initializing…"}
+                  </span>
+                  {buildStatus.isStreaming && !isBuildComplete && !isBuildError && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-primary">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+                      </span>
+                      Live
+                    </span>
+                  )}
+                </div>
+                <div className="relative h-3 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all duration-500 ease-out relative",
+                      isBuildError
+                        ? "bg-gradient-to-r from-destructive to-destructive/80"
+                        : isBuildComplete
+                          ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                          : "bg-gradient-to-r from-primary via-purple-500 to-emerald-500"
+                    )}
+                    style={{ width: `${buildStatus.status?.progress ?? 0}%` }}
+                  >
+                    {!isBuildComplete && !isBuildError && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <BuildStepIndicator currentStage={currentStage} />
 
-              {/* Event log */}
-              <div className="rounded-lg border bg-muted/20">
+              <div className="rounded-xl border bg-black/[0.03] dark:bg-white/[0.02] overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b bg-muted/40">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      Build log
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {buildStatus.isStreaming && (
+                      <span className="inline-flex items-center gap-1.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                        </span>
+                        Streaming
+                      </span>
+                    )}
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                      {buildEvents.length} lines
+                    </span>
+                  </div>
+                </div>
+
                 {buildEvents.length === 0 && !isBuildError && (
-                  <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Starting build...
+                  <div className="flex flex-col items-center justify-center gap-3 py-12 text-sm text-muted-foreground">
+                    <div className="relative">
+                      <div className="h-8 w-8 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+                    </div>
+                    <p className="font-medium">Initializing build pipeline…</p>
+                    <p className="text-xs">Waiting for the first event from the server</p>
                   </div>
                 )}
 
                 {buildEvents.length > 0 && (
-                  <div className="divide-y divide-border/50">
-                    {buildEvents.map((event, idx) => (
-                      <div
-                        key={idx}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-2.5 text-sm transition-colors",
-                          event.stage === "error" && "bg-destructive/5",
-                        )}
-                      >
-                        <span className="font-mono text-[11px] text-muted-foreground/60 w-5 text-right shrink-0">
-                          {idx + 1}
-                        </span>
-                        <span
+                  <div className="divide-y divide-border/30 max-h-[400px] overflow-y-auto">
+                    {buildEvents.map((event, idx) => {
+                      const isToolEnhanced = event.event === "tool_enhanced";
+                      const isToolFailed = event.event === "tool_failed";
+                      const isComplete = event.event === "ai_complete" || event.event === "done";
+                      const isError = event.stage === "error";
+
+                      return (
+                        <div
+                          key={idx}
                           className={cn(
-                            "rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider border shrink-0",
-                            event.stage === "parsing" &&
-                              "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-                            event.stage === "generating" &&
-                              "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
-                            event.stage === "testing" &&
-                              "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
-                            event.stage === "deploying" &&
-                              "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20",
-                            event.stage === "complete" &&
-                              "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-                            event.stage === "error" &&
-                              "bg-destructive/10 text-destructive border-destructive/30",
+                            "flex items-start gap-3 px-4 py-3 text-sm transition-all duration-200",
+                            isError && "bg-destructive/[0.03]",
+                            isToolEnhanced && "bg-emerald-500/[0.02]",
+                            isToolFailed && "bg-destructive/[0.02]",
+                            idx === buildEvents.length - 1 && !isBuildComplete && "bg-primary/[0.02]"
                           )}
                         >
-                          {event.stage}
-                        </span>
-                        <span className="flex-1 text-foreground/80">
-                          {event.message}
-                        </span>
-                        <span className="font-mono text-xs tabular-nums text-muted-foreground shrink-0">
-                          {event.progress}%
-                        </span>
-                      </div>
-                    ))}
+                          <span className="font-mono text-[10px] text-muted-foreground/50 w-6 text-right shrink-0 pt-1">
+                            {String(idx + 1).padStart(2, "0")}
+                          </span>
+
+                          <div className="shrink-0 pt-0.5">
+                            {isError ? (
+                              <XCircle className="h-4 w-4 text-destructive" />
+                            ) : isToolEnhanced ? (
+                              <Check className="h-4 w-4 text-emerald-500" />
+                            ) : isToolFailed ? (
+                              <AlertCircle className="h-4 w-4 text-destructive" />
+                            ) : isComplete ? (
+                              <Sparkles className="h-4 w-4 text-amber-500" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-muted-foreground/50" />
+                            )}
+                          </div>
+
+                          <div className="flex-1 min-w-0 space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span
+                                className={cn(
+                                  "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border",
+                                  event.stage === "parsing" &&
+                                    "bg-blue-500/8 text-blue-600 dark:text-blue-400 border-blue-500/15",
+                                  event.stage === "generating" &&
+                                    "bg-purple-500/8 text-purple-600 dark:text-purple-400 border-purple-500/15",
+                                  event.stage === "testing" &&
+                                    "bg-amber-500/8 text-amber-600 dark:text-amber-400 border-amber-500/15",
+                                  event.stage === "deploying" &&
+                                    "bg-cyan-500/8 text-cyan-600 dark:text-cyan-400 border-cyan-500/15",
+                                  event.stage === "complete" &&
+                                    "bg-emerald-500/8 text-emerald-600 dark:text-emerald-400 border-emerald-500/15",
+                                  event.stage === "error" &&
+                                    "bg-destructive/8 text-destructive border-destructive/20",
+                                )}
+                              >
+                                {event.stage}
+                              </span>
+                              {event.tool_name && (
+                                <span className="inline-flex items-center gap-1 rounded-md bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary border border-primary/10">
+                                  <Wand2 className="h-3 w-3" />
+                                  {event.tool_name}
+                                </span>
+                              )}
+                              {event.progress != null && event.progress > 0 && (
+                                <span className="text-[10px] font-mono text-muted-foreground tabular-nums">
+                                  {event.progress}%
+                                </span>
+                              )}
+                            </div>
+                            <p className={cn(
+                              "text-sm leading-relaxed",
+                              isError ? "text-destructive" : "text-foreground/85"
+                            )}>
+                              {event.message}
+                            </p>
+                            <div className="flex items-center gap-3 pt-0.5">
+                              {event.quality_score != null && (
+                                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                                  <Sparkles className="h-3 w-3" />
+                                  Quality {event.quality_score}
+                                </span>
+                              )}
+                              {event.cost_cents != null && event.cost_cents > 0 && (
+                                <span className="text-[10px] text-muted-foreground tabular-nums">
+                                  ${(event.cost_cents / 100).toFixed(2)}
+                                </span>
+                              )}
+                              {event.successful != null && (
+                                <span className="text-[10px] text-muted-foreground">
+                                  {event.successful} ok, {event.failed ?? 0} failed
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 
                 {buildEvents.length === 0 && isBuildError && (
-                  <div className="flex items-center justify-center gap-2 py-8 text-sm text-destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    {buildStatus.error?.message || "Build failed to start"}
+                  <div className="flex flex-col items-center justify-center gap-2 py-12 text-sm text-destructive">
+                    <XCircle className="h-8 w-8" />
+                    <p className="font-medium">Build failed to start</p>
+                    <p className="text-xs text-muted-foreground">
+                      {buildStatus.error?.message}
+                    </p>
                   </div>
                 )}
               </div>
 
-              {/* Completion success alert */}
               {isBuildComplete && (
-                <div className="flex items-start gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
-                  <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
-                  <div className="space-y-1">
-                    <p className="font-semibold text-emerald-600 dark:text-emerald-400">
-                      Build complete
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Your MCP server is deployed. Redirecting to the server
-                      dashboard...
-                    </p>
+                <div className="relative overflow-hidden rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.03] to-emerald-500/[0.01] p-5">
+                  <div className="absolute top-0 right-0 p-3 opacity-10">
+                    <Sparkles className="h-16 w-16 text-emerald-500" />
+                  </div>
+                  <div className="relative flex items-start gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 shrink-0">
+                      <Sparkles className="h-5 w-5 text-emerald-500" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="font-semibold text-emerald-600 dark:text-emerald-400">
+                        Build complete
+                      </p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {(() => {
+                          const last = buildEvents[buildEvents.length - 1];
+                          if (last?.successful != null && last?.failed != null) {
+                            return (
+                              <>
+                                <span className="font-medium text-foreground">{last.successful}</span> tool
+                                {last.successful !== 1 ? "s" : ""} enhanced successfully
+                                {last.failed > 0 && (
+                                  <>, <span className="font-medium text-destructive">{last.failed}</span> failed</>
+                                )}
+                                . Your MCP server is ready.
+                              </>
+                            );
+                          }
+                          return "Your MCP server is deployed and ready to use.";
+                        })()}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Error alert */}
               {isBuildError && !isBuildComplete && (
-                <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
-                  <div className="space-y-1">
-                    <p className="font-semibold text-destructive">
-                      Build failed
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {currentStage === "error" && buildStatus.status
-                        ? buildStatus.status.message
-                        : buildStatus.error?.message ||
-                          "An unknown error occurred."}
-                    </p>
+                <div className="relative overflow-hidden rounded-xl border border-destructive/20 bg-gradient-to-br from-destructive/[0.03] to-destructive/[0.01] p-5">
+                  <div className="absolute top-0 right-0 p-3 opacity-10">
+                    <AlertCircle className="h-16 w-16 text-destructive" />
+                  </div>
+                  <div className="relative flex items-start gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 shrink-0">
+                      <AlertCircle className="h-5 w-5 text-destructive" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <p className="font-semibold text-destructive">
+                        Build failed
+                      </p>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {currentStage === "error" && buildStatus.status
+                          ? buildStatus.status.message
+                          : buildStatus.error?.message ||
+                            "An unknown error occurred during the build."}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Actions */}
           <div className="flex justify-end gap-3">
             {isBuildError && (
-              <Button onClick={handleRetryBuild} className="gap-2">
+              <Button onClick={handleRetryBuild} variant="outline" className="gap-2">
                 <RotateCcw className="h-4 w-4" />
                 Retry Build
               </Button>
@@ -580,7 +778,7 @@ export default function NewServerWizardPage() {
             {isBuildComplete && (
               <Button
                 onClick={() => router.push(`/dashboard/servers/${server.id}`)}
-                className="gap-2"
+                className="gap-2 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-0"
               >
                 <Sparkles className="h-4 w-4" />
                 View Server

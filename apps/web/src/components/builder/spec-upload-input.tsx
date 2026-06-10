@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useUploadSpec } from "@/hooks/use-spec";
+import { ApiClientError } from "@/lib/api";
 import type { SpecUploadResponse } from "@/types/api";
 
 interface SpecUploadInputProps {
@@ -76,8 +77,19 @@ const SpecUploadInput = React.forwardRef<HTMLDivElement, SpecUploadInputProps>(
         const result = await uploadSpec.mutateAsync(file);
         onSuccess(result as any);
       } catch (err: unknown) {
-        const message =
-          err instanceof Error ? err.message : "Failed to upload spec";
+        let message = "Failed to upload spec";
+        if (err instanceof ApiClientError && err.body) {
+          const body =
+            typeof err.body === "string" ? JSON.parse(err.body) : err.body;
+          const detail = body?.error?.message ?? body?.detail ?? null;
+          const suggestion = body?.error?.suggestion ?? null;
+          if (detail) {
+            message = detail;
+            if (suggestion) message += ` — ${suggestion}`;
+          }
+        } else if (err instanceof Error) {
+          message = err.message;
+        }
         setFileError(message);
         onError?.(message);
       }

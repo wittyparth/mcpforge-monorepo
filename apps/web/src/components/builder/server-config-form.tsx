@@ -101,6 +101,8 @@ interface ServerConfigFormProps {
   onSubmit: (data: ServerConfigFormData) => void;
   /** Whether the form is submitting (disables button) */
   isSubmitting?: boolean;
+  /** Form mode: "create" (default, shows slug + "Save and Continue") or "edit" (hides slug + "Save Changes") */
+  mode?: "create" | "edit";
   className?: string;
 }
 
@@ -113,7 +115,7 @@ interface ServerConfigFormProps {
 const ServerConfigForm = React.forwardRef<
   HTMLFormElement,
   ServerConfigFormProps
->(({ defaultValues, onSubmit, isSubmitting = false, className }, ref) => {
+>(({ defaultValues, onSubmit, isSubmitting = false, mode = "create", className }, ref) => {
   const slugEditedRef = React.useRef(false);
 
   const {
@@ -195,8 +197,8 @@ const ServerConfigForm = React.forwardRef<
             )}
           </div>
 
-          {/* Slug */}
-          <div className="space-y-2">
+          {/* Slug — hidden in edit mode (slug is immutable after creation) */}
+          {mode === "create" && <div className="space-y-2">
             <Label htmlFor="server-slug">
               Server slug <span className="text-destructive">*</span>
             </Label>
@@ -227,7 +229,7 @@ const ServerConfigForm = React.forwardRef<
             <p className="text-xs text-muted-foreground">
               Auto-derived from name. Type to override.
             </p>
-          </div>
+          </div>}
 
           {/* Description */}
           <div className="space-y-2">
@@ -359,7 +361,7 @@ const ServerConfigForm = React.forwardRef<
         ) : (
           <>
             <Globe className="h-4 w-4" />
-            Save and Continue
+            {mode === "edit" ? "Save Changes" : "Save and Continue"}
           </>
         )}
       </Button>

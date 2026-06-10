@@ -1,12 +1,13 @@
 /**
- * Configure the generated SDK (base URL, credentials, CSRF token).
+ * Configure the generated SDK (base URL, credentials, CSRF token, auth refresh).
  *
  * Import this file once at the app entry point or in the API client module
  * to set up the OpenAPI config BEFORE making any SDK calls.
  */
 
 import { OpenAPI } from "../client/core/OpenAPI";
-import type { AxiosRequestConfig } from "axios";
+import type { AxiosRequestConfig, AxiosResponse } from "axios";
+import { attemptTokenRefresh } from "./auth-refresh";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -31,4 +32,26 @@ OpenAPI.interceptors.request.use(async (config: AxiosRequestConfig) => {
     }
   }
   return config;
+});
+
+// ── Response interceptor: auto-refresh on 401 ─────────────────────────
+// When any SDK call returns 401, try to refresh the access token via
+// POST /api/v1/auth/refresh. If the refresh succeeds, the backend sets
+// new cookies and we dispatch a "auth:refreshed" event so the app can
+// re-fetch the current user. If the refresh fails, dispatch "auth:expired".
+//
+// NOTE: The SDK's response interceptor is read-only — it cannot retry the
+// original request. Callers should use TanStack Query's `retry` option or
+// handle the retry at the hook level. The interceptor ensures the token is
+// fresh before the retry happens.
+OpenAPI.interceptors.response.use(async (response: AxiosResponse) => {
+  if (response.status === 401) {
+    const refreshed = await attemptTokenRefresh();
+    if (refreshed) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("auth:refreshed"));
+      }
+    }
+  }
+  return response;
 });

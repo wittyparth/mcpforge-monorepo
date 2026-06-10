@@ -54,3 +54,92 @@ export function useCreateServer() {
     },
   });
 }
+
+/**
+ * Update a server mutation.
+ * On success, invalidates the server query and shows a success toast.
+ */
+export function useUpdateServer(serverId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: Record<string, unknown>) =>
+      api.servers.update(serverId, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: [...SERVERS_KEY, serverId] });
+      void queryClient.invalidateQueries({ queryKey: SERVERS_KEY });
+      toast.success("Server configuration updated");
+    },
+    onError: (error: unknown) => {
+      if (error instanceof ApiClientError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to update server. Please try again.");
+      }
+    },
+  });
+}
+
+export function useDuplicateServer() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { new_name: string; new_slug?: string | null };
+    }) => api.servers.duplicate(id, data),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSuccess: (server: any) => {
+      void queryClient.invalidateQueries({ queryKey: SERVERS_KEY });
+      toast.success("Server duplicated successfully!");
+      router.push(`/dashboard/servers/${server.id}`);
+    },
+    onError: (error: unknown) => {
+      if (error instanceof ApiClientError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to duplicate server. Please try again.");
+      }
+    },
+  });
+}
+
+export function useVersions(
+  serverId: string,
+  params?: { skip?: number; limit?: number },
+) {
+  return useQuery({
+    queryKey: ["server-versions", serverId, params],
+    queryFn: () => api.servers.listVersions(serverId, params),
+    enabled: !!serverId,
+  });
+}
+
+export function useRollback(serverId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { version: number }) =>
+      api.servers.rollback(serverId, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: [...SERVERS_KEY, serverId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["server-versions", serverId],
+      });
+      toast.success("Server rolled back successfully!");
+    },
+    onError: (error: unknown) => {
+      if (error instanceof ApiClientError) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to rollback server. Please try again.");
+      }
+    },
+  });
+}
