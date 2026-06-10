@@ -9,6 +9,47 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 
+class DuplicateServerRequest(BaseModel):
+    """Request body for POST /servers/{id}/duplicate."""
+
+    new_name: str = Field(..., min_length=1, max_length=200)
+    new_slug: str | None = Field(
+        None,
+        min_length=3,
+        max_length=50,
+        pattern=r"^[a-z0-9]+(-[a-z0-9]+)*$",
+        description="Kebab-case slug (3-50 chars). Auto-generated from name if omitted.",
+    )
+
+
+class ServerVersionResponse(BaseModel):
+    """A version snapshot of a server's configuration."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    version: int
+    change_note: str | None = None
+    changed_by: UUID | None = None
+    changed_by_email: str | None = None
+    created_at: datetime
+
+
+class ServerVersionsResponse(BaseModel):
+    """Paginated list of version snapshots."""
+
+    items: list[ServerVersionResponse]
+    total: int
+    skip: int = 0
+    limit: int = 20
+
+
+class RollbackRequest(BaseModel):
+    """Request body for POST /servers/{id}/rollback."""
+
+    version: int = Field(..., ge=1)
+
+
 class MCPServerCreate(BaseModel):
     """Request body for creating a new MCP server."""
 

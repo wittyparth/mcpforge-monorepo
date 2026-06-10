@@ -6,7 +6,16 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from sqlalchemy import JSON, BigInteger, ForeignKey, ForeignKeyConstraint, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    BigInteger,
+    DateTime,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -66,14 +75,14 @@ class MCPServer(Base, UUIDMixin, TimestampMixin):
     # Stats (cached)
     total_calls: Mapped[int] = mapped_column(BigInteger, default=0)
     monthly_calls: Mapped[int] = mapped_column(Integer, default=0)
-    last_call_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    last_call_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Version tracking
     version: Mapped[int] = mapped_column(Integer, default=1)
 
     # AI enhancement (F2)
     description_review_status: Mapped[str] = mapped_column(String(20), default="pending")
-    last_ai_run_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    last_ai_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     ai_enhancement_cost_cents: Mapped[int] = mapped_column(Integer, default=0)
     original_tools_config: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 

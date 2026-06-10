@@ -6,7 +6,7 @@ SecurityScanRepository and SecurityAckRepository.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -232,7 +232,7 @@ async def export_report(
     return SecurityReport(
         server_id=server_id,
         server_name=server_name,
-        generated_at=datetime.now(timezone.utc),
+        generated_at=datetime.now(UTC),
         scan=ScanResultResponse.model_validate(scan) if scan else None,
         acknowledgments=[
             AcknowledgeResponse(
