@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import Boolean, CheckConstraint, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -46,8 +46,12 @@ class Subscription(Base, UUIDMixin, TimestampMixin):
     )
     plan: Mapped[str] = mapped_column(String(20), nullable=False)
     status: Mapped[str] = mapped_column(String(20), nullable=False)
-    current_period_start: Mapped[datetime | None] = mapped_column(nullable=True)
-    current_period_end: Mapped[datetime | None] = mapped_column(nullable=True)
+    current_period_start: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    current_period_end: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, default=False)
 
     invoices: Mapped[list[Invoice]] = relationship(

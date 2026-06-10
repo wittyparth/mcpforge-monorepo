@@ -6,71 +6,82 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 
 class PlanInfo(BaseModel):
     """A single plan as returned by GET /api/v1/billing/plans."""
 
-    id: Literal["free", "pro", "team"]
+    id: str
     name: str
-    monthly_price_cents: int
-    yearly_price_cents: int | None
+    price_cents: int
+    currency: str = "usd"
+    period: str = "monthly"
     features: list[str]
-    limits: dict[str, int] = Field(
-        default_factory=dict,
-        description="e.g., {'servers': 2, 'monthly_calls': 500}",
-    )
-    stripe_price_id_monthly: str | None = None
-    stripe_price_id_yearly: str | None = None
+    popular: bool = False
+    min_seats: int | None = None
+
+
+class PlansResponse(BaseModel):
+    """Response for GET /api/v1/billing/plans."""
+
+    plans: list[PlanInfo]
 
 
 class SubscribeRequest(BaseModel):
     """POST /api/v1/billing/subscribe — subscribe to a plan."""
 
     plan: Literal["pro", "team"]
-    billing_cycle: Literal["monthly", "yearly"] = "monthly"
-    seats: int = Field(default=1, ge=1, le=100, description="Only used for team plan")
-    stripe_payment_method_id: str | None = Field(
-        default=None,
-        description=(
-            "Stripe payment method ID; if null, the user is redirected to Stripe Checkout."
-        ),
-    )
+    billing_period: Literal["monthly", "yearly"] = "monthly"
+    seats: int = Field(default=1, ge=1, le=100, description="Number of seats (team plan only)")
 
 
-class SubscribeResponse(BaseModel):
-    """Response for a subscribe request."""
+class CheckoutResponse(BaseModel):
+    """Response for a successful checkout session creation."""
 
-    subscription_id: UUID
-    plan: str
-    status: str
-    checkout_url: str | None = Field(
-        default=None,
-        description="URL to redirect to if user needs to complete payment via Stripe Checkout",
-    )
-    client_secret: str | None = Field(
-        default=None, description="Stripe SetupIntent client secret for inline payment",
-    )
+    checkout_url: str
+    session_id: str
+
+
+class PortalRequest(BaseModel):
+    """POST /api/v1/billing/portal — get a Stripe customer portal link."""
+
+    return_url: str | None = None
 
 
 class PortalResponse(BaseModel):
-    """POST /api/v1/billing/portal — Stripe customer portal link."""
+    """Response for a successful portal session creation."""
 
-    url: str
-    expires_at: datetime
+    portal_url: str
 
 
-class WebhookEvent(BaseModel):
-    """Schema for Stripe webhook payloads (POST /api/v1/billing/webhook).
+class SubscriptionResponse(BaseModel):
+    """A user's current subscription."""
 
-    This is a minimal schema; the full Stripe event types live in the
-    `stripe` SDK. We accept a dict and validate structurally.
-    """
+    id: UUID
+    plan: str
+    status: str
+    current_period_start: datetime | None = None
+    current_period_end: datetime | None = None
+    cancel_at_period_end: bool = False
 
-    id: str
-    type: str
-    data: dict[str, object]
-    created: datetime
 
-    model_config = ConfigDict(extra="allow")
+class InvoiceResponse(BaseModel):
+    """A single invoice."""
+
+    id: UUID
+    amount_cents: int
+    currency: str
+    status: str
+    invoice_pdf_url: str | None = None
+    hosted_invoice_url: str | None = None
+    created_at: datetime
+
+
+class InvoicesListResponse(BaseModel):
+    """Paginated list of invoices."""
+
+    items: list[InvoiceResponse]
+    total: int
+    skip: int = 0
+    limit: int = 20
