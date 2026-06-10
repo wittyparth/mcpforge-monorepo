@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from enum import Enum
 from typing import Literal
 from uuid import UUID
 
@@ -58,3 +59,52 @@ class AcknowledgeResponse(BaseModel):
     server_id: UUID
     finding_id: str
     acknowledged_at: datetime
+
+
+class FindingSeverity(str, Enum):
+    """Severity levels for security findings."""
+
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    INFO = "info"
+
+
+class ScanTriggerResponse(BaseModel):
+    """Response when a security scan is initiated."""
+
+    scan_id: UUID
+    scan_status: str = "running"
+    message: str = "Security scan initiated"
+
+
+class ScanHistoryResponse(BaseModel):
+    """Paginated list of scan results for a server."""
+
+    items: list[ScanResultResponse]
+    total: int
+    page: int
+    page_size: int
+    next_page: int | None = None
+
+
+class SecurityReport(BaseModel):
+    """JSON export of a server's security posture."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    server_id: UUID
+    server_name: str = ""
+    generated_at: datetime
+    scan: ScanResultResponse | None = None
+    acknowledgments: list[AcknowledgeResponse] = Field(default_factory=list)
+    summary: str = ""
+
+
+class DeployBlockedResponse(BaseModel):
+    """Response when a deploy is blocked due to critical security findings."""
+
+    blocked: bool = True
+    reason: str = "Security scan found CRITICAL findings"
+    critical_findings: list[Finding] = Field(default_factory=list)
+    scan_id: UUID | None = None

@@ -8,13 +8,13 @@ from collections.abc import AsyncGenerator
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user, get_db
-from app.core.exceptions import AIDescriptionError, ForbiddenError, NotFoundError
+from app.core.exceptions import AIDescriptionError, ForbiddenError, NotFoundError, NotImplementedFeatureError
 from app.core.logging import get_logger
 from app.core.sse import sse_manager
 from app.models.mcp_server import MCPServer
@@ -71,8 +71,15 @@ async def build_status_sse(
     request: Request,
     current_user: User = Depends(get_current_user),
     session: AsyncSession = Depends(get_db),
+    close_after_first: bool = False,
 ) -> StreamingResponse:
-    """SSE stream of build events — real-time AI enhancement progress."""
+    """SSE stream of build events — real-time AI enhancement progress.
+
+    Args:
+        close_after_first: When ``True``, the stream emits only the
+            initial ``connected`` event then closes. Used by integration
+            tests to avoid hanging on the production heartbeat loop.
+    """
     repo = MCPServerRepository(session)
     server = await repo.get_by_id(server_id)
     if not server:
@@ -90,21 +97,16 @@ async def build_status_sse(
             })
             yield f"event: connected\ndata: {connected}\n\n"
 
+            if close_after_first:
+                return
+
             while True:
                 try:
-                    data = await asyncio.wait_for(queue.get(), timeout=15.0)
+                    data = await asyncio.wait_for(queue.get(), timeout=5.0)
                     parsed = json.loads(data)
                     event_type = parsed.get("event", "message")
                     yield f"event: {event_type}\ndata: {data}\n\n"
-
-                    if await request.is_disconnected():
-                        logger.info(
-                            "sse_client_disconnected",
-                            server_id=str(server_id),
-                        )
-                        break
                 except TimeoutError:
-                    # Send heartbeat to keep connection alive
                     yield ": heartbeat\n\n"
         except Exception:
             logger.exception(
@@ -117,7 +119,11 @@ async def build_status_sse(
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
     )
 
 
@@ -205,7 +211,50 @@ async def accept_ai_enhancements(
     }
 
 
-@router.post("/deploy", status_code=501)
-async def deploy_server(server_id: UUID) -> None:
-    """Deploy the server (triggers security scan first). Pending F4 + F5."""
-    raise NotImplementedFeatureError("Deploy: pending F4 + F5")
+@router.post("/deploy", response_model=dict[str, Any])
+async def deploy_server(
+    server_id: UUID,
+    session: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> dict[str, Any]:
+    """Deploy the server (triggers security scan first)."""
+    from app.repositories.security_repo import SecurityAckRepository, SecurityScanRepository
+    from app.services.security_scanner.scanner import SecurityScanner
+
+    repo = MCPServerRepository(session)
+    server = await repo.get_by_id(server_id)
+    if not server:
+        raise NotFoundError("Server not found")
+    if server.user_id != current_user.id:
+        raise ForbiddenError("You do not own this server")
+
+    # Run security scan synchronously
+    scanner = SecurityScanner(session)
+    scan_result = await scanner.scan(server_id)
+    # Persist scan result before checking — even if deploy is blocked,
+    # the user should be able to view the findings via GET /security/latest.
+    await session.commit()
+
+    # Block deploy if CRITICAL findings
+    if scan_result.critical_count > 0:
+        critical_findings = [f for f in scan_result.findings if f.get("severity") == "critical"]
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "Security scan found CRITICAL findings. Resolve them before deploying.",
+                "code": "BLOCKED_BY_SCANNER",
+                "critical_findings": critical_findings,
+            },
+        )
+
+    # Proceed with deploy (mark as active)
+    await repo.update(server, status="active")
+    await session.commit()
+
+    logger.info(
+        "server_deployed",
+        server_id=str(server_id),
+        user_id=str(current_user.id),
+    )
+
+    return {"status": "deployed", "server_id": str(server_id)}

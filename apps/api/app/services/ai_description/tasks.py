@@ -1,8 +1,8 @@
 """Celery tasks for the AI Description Engine.
 
-Uses a module-level event loop instead of asyncio.run() so the
-SQLAlchemy async engine's connection pool is always pinned to the same
-loop -- avoiding Future attached to a different loop errors.
+Uses asyncio.run() per task invocation to create a fresh event loop
+and avoid the macOS kqueue selector bug (I/O operation on closed
+kqueue) that occurs when reusing a loop across multiple Celery runs.
 """
 
 from __future__ import annotations
@@ -26,10 +26,6 @@ from app.models.user import User
 from app.services.ai_description_engine import AIDescriptionEngine
 
 logger = get_logger(__name__)
-
-# Module-level event loop -- reused across all task invocations so the
-# SQLAlchemy async engine's pool stays pinned to a single loop.
-_loop = asyncio.new_event_loop()
 
 
 async def _enhance_async(
@@ -121,6 +117,7 @@ async def _enhance_async(
             .where(MCPServer.id == UUID(server_id))
             .values(
                 tools_config=updated_tools_config,
+                status="active",
                 description_review_status=server.description_review_status,
                 ai_enhancement_cost_cents=server.ai_enhancement_cost_cents,
             )
@@ -128,6 +125,7 @@ async def _enhance_async(
 
         server.description_review_status = "review"
         server.ai_enhancement_cost_cents = (server.ai_enhancement_cost_cents or 0) + total_cost
+        server.status = "active"
 
         if user_id:
             user_result = await session.execute(select(User).where(User.id == UUID(user_id)))
@@ -141,6 +139,16 @@ async def _enhance_async(
         "event": "ai_complete", "server_id": server_id,
         "total": total_tools, "successful": len(successful),
         "failed": total_tools - len(successful), "cost_cents": total_cost,
+    })
+
+    await sse_manager.publish(server_id, {
+        "event": "done", "server_id": server_id,
+        "progress": 98,
+    })
+
+    await sse_manager.publish(server_id, {
+        "event": "complete", "server_id": server_id,
+        "progress": 100,
     })
 
     logger.info("ai_enhance_complete", server_id=server_id, enhanced=len(successful), failed=total_tools - len(successful), cost_cents=total_cost)
@@ -166,4 +174,4 @@ def enhance_all_descriptions(
 ) -> dict[str, Any]:
     """Enhance all (or specified) tool descriptions for a server."""
     logger.info("ai_enhance_start", server_id=server_id, request_id=request_id)
-    return _loop.run_until_complete(_enhance_async(server_id, user_id, tool_names, request_id))
+    return asyncio.run(_enhance_async(server_id, user_id, tool_names, request_id))
