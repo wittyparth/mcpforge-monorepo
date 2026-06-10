@@ -23,7 +23,7 @@ services:
       - key: ENCRYPTION_KEY
         sync: false
       - key: CORS_ORIGINS
-        sync: false
+        value: '["https://mcpforge-monorepo-web-8nay-c7a96u1b9.vercel.app","https://mcpforge-monorepo.vercel.app"]'
       # AWS S3 (spec storage)
       - key: AWS_S3_BUCKET
         sync: false
